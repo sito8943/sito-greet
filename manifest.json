@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Greeting New Tab",
-  "version": "1.0.1",
+  "name": "Sito Greeting New Tab",
+  "version": "1.0.2",
   "description": "Shows a greeting with the given user's name and profile name.",
   "browser_specific_settings": {
     "gecko": {
