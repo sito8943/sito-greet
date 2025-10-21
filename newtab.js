@@ -23,45 +23,42 @@ function getGreeting() {
 
 async function getUserName() {
   const stored = await browser.storage.local.get("username");
+
+  const username = document.getElementById("input-username");
+  username.value = stored.username ?? "User";
+
   return stored.username || "User";
 }
 
 async function getProfileName() {
   const stored = await browser.storage.local.get("profile_name");
+
+  const profile = document.getElementById("input-profile");
+  profile.value = stored.profile_name ?? "Default Profile";
+
   return stored.profile_name || "Default Profile";
 }
 
-function closeSettings() {
-  document.getElementById("settings-menu").classList.remove("opened");
-}
-
-function toggleSettings(e) {
-  const menu = document.getElementById("settings-menu");
-  if (menu.classList.contains("opened")) {
-    closeSettings();
-    window.removeEventListener("click", closeSettings);
-  } else {
-    menu.classList.add("opened");
-    e.stopPropagation();
-    window.addEventListener("click", closeSettings);
-  }
-}
-
-function toggleChangeUsername() {
-  const dialog = document.getElementById("change-username");
+function openDialog() {
+  const dialog = document.getElementById("dialog-settings");
   dialog.showModal();
 }
 
-function closeDialog(dialog) {
-  if (dialog) {
-    dialog.close();
-  }
+function closeDialog() {
+  const dialog = document.getElementById("dialog-settings");
+  dialog.close();
 }
 
-async function updateUserName(e) {
+async function updateSettings(e) {
   const username = document.getElementById("input-username").value;
+  const profile_name = document.getElementById("input-profile").value;
 
-  await browser.storage.local.set({ username });
+  const greeting = getGreeting();
+
+  document.getElementById("greeting").textContent = `${greeting}, ${username}!`;
+  document.getElementById("profile").textContent = `Profile: ${profile_name}`;
+
+  await browser.storage.local.set({ username, profile_name });
 }
 
 document.getElementById("clock").textContent = getFormattedDateTime();
@@ -76,18 +73,12 @@ document.getElementById("clock").textContent = getFormattedDateTime();
   }, 1000);
 
   document
-    .getElementById("user-name")
-    .addEventListener("click", toggleChangeUsername);
-  document
     .getElementById("settings-button")
-    .addEventListener("click", toggleSettings);
-  document.getElementById("cancel-username").addEventListener("click", () => {
-    const dialog = document.getElementById("change-username");
-    closeDialog(dialog);
-  });
+    .addEventListener("click", openDialog);
+  document.getElementById("cancel").addEventListener("click", closeDialog);
   document
-    .getElementById("form-username")
-    .addEventListener("submit", updateUserName);
+    .getElementById("form-settings")
+    .addEventListener("submit", updateSettings);
   document.getElementById("greeting").textContent = `${greeting}, ${username}!`;
   document.getElementById("profile").textContent = `Profile: ${profileName}`;
 })();

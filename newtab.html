@@ -16,34 +16,23 @@
         <h1 id="greeting"></h1>
         <p id="profile"></p>
     </main>
-    <dialog id="change-username">
-        <h2>Change username</h2>
-        <form id="form-username" method="dialog">
+    <dialog id="dialog-settings">
+        <h2>Settings</h2>
+        <form id="form-settings" method="dialog">
             <label for="username">
                 Who are you?
             </label>
             <input id="input-username" value="" placeholder="Type your username here">
+            <label for="username">
+                Which profile is this?
+            </label>
+            <input id="input-profile" value="" placeholder="Type profile name here">
             <div class="button-row right">
                 <button class="submit button">Save</button>
-                <button id="cancel-username" type="button" class="outlined button">Cancel</button>
+                <button id="cancel" type="button" class="outlined button">Cancel</button>
             </div>
         </form>
     </dialog>
-    <div role="menu" id="settings-menu" aria-labelledby="settings-title" class="settings-menu">
-        <h2 id="settings-title">Settings</h2>
-        <ul>
-            <li role="none">
-                <button role="menuitem" id="user-name">
-                    Change username
-                </button>
-            </li>
-            <li role="none">
-                <button role="menuitem" id="profile-name">
-                    Change profile name
-                </button>
-            </li>
-        </ul>
-    </div>
     <footer>
         <a class="icon-button" href="" target="_blank" rel="noreferrer">
             <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
