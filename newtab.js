@@ -21,47 +21,86 @@ function getGreeting() {
   return "Good evening";
 }
 
-async function getUserName() {
-  const stored = await browser.storage.local.get("username");
+function hasBrowserStorage() {
+  try {
+    return (
+      typeof browser !== "undefined" &&
+      browser.storage &&
+      browser.storage.local &&
+      typeof browser.storage.local.get === "function"
+    );
+  } catch (_) {
+    return false;
+  }
+}
 
-  const username = document.getElementById("input-username");
-  username.value = stored.username ?? "User";
+async function getUserName() {
+  let stored = {};
+  if (hasBrowserStorage()) {
+    stored = await browser.storage.local.get("username");
+  } else if (typeof localStorage !== "undefined") {
+    const v = localStorage.getItem("username");
+    if (v) stored.username = v;
+  }
+
+  const usernameInput = document.getElementById("input-username");
+  if (usernameInput) usernameInput.value = stored.username ?? "User";
 
   return stored.username || "User";
 }
 
 async function getProfileName() {
-  const stored = await browser.storage.local.get("profile_name");
+  let stored = {};
+  if (hasBrowserStorage()) {
+    stored = await browser.storage.local.get("profile_name");
+  } else if (typeof localStorage !== "undefined") {
+    const v = localStorage.getItem("profile_name");
+    if (v) stored.profile_name = v;
+  }
 
-  const profile = document.getElementById("input-profile");
-  profile.value = stored.profile_name ?? "Default Profile";
+  const profileInput = document.getElementById("input-profile");
+  if (profileInput) profileInput.value = stored.profile_name ?? "Default Profile";
 
   return stored.profile_name || "Default Profile";
 }
 
 function openDialog() {
   const dialog = document.getElementById("dialog-settings");
-  dialog.showModal();
+  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
 }
 
 function closeDialog() {
   const dialog = document.getElementById("dialog-settings");
-  dialog.close();
+  if (dialog && typeof dialog.close === "function") dialog.close();
 }
 
 async function updateSettings(e) {
-  const username = document.getElementById("input-username").value;
-  const profile_name = document.getElementById("input-profile").value;
+  const usernameEl = document.getElementById("input-username");
+  const profileEl = document.getElementById("input-profile");
+  const username = (usernameEl && usernameEl.value) || "User";
+  const profile_name = (profileEl && profileEl.value) || "Default Profile";
 
   const greeting = getGreeting();
 
-  document.getElementById("greeting").textContent = `${greeting}, ${username}!`;
-  document.getElementById("profile").textContent = `Profile: ${profile_name}`;
+  const greetingEl = document.getElementById("greeting");
+  if (greetingEl) greetingEl.textContent = `${greeting}, ${username}!`;
+  const profileTextEl = document.getElementById("profile");
+  if (profileTextEl) profileTextEl.textContent = `Profile: ${profile_name}`;
 
-  await browser.storage.local.set({ username, profile_name });
+  if (hasBrowserStorage()) {
+    await browser.storage.local.set({ username, profile_name });
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem("username", username);
+      localStorage.setItem("profile_name", profile_name);
+    } catch (_) {}
+  }
 }
 
-document.getElementById("clock").textContent = getFormattedDateTime();
+{
+  const clock = document.getElementById("clock");
+  if (clock) clock.textContent = getFormattedDateTime();
+}
 
 (async () => {
   const greeting = getGreeting();
@@ -69,45 +108,50 @@ document.getElementById("clock").textContent = getFormattedDateTime();
   const profileName = await getProfileName();
 
   setInterval(() => {
-    document.getElementById("clock").textContent = getFormattedDateTime();
+    const clock = document.getElementById("clock");
+    if (clock) clock.textContent = getFormattedDateTime();
   }, 1000);
 
-  document
-    .getElementById("settings-button")
-    .addEventListener("click", openDialog);
-  document.getElementById("cancel").addEventListener("click", closeDialog);
-  document
-    .getElementById("form-settings")
-    .addEventListener("submit", updateSettings);
-  document.getElementById("greeting").textContent = `${greeting}, ${username}!`;
-  document.getElementById("profile").textContent = `Profile: ${profileName}`;
+  const settingsBtn = document.getElementById("settings-button");
+  if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
+  const cancelBtn = document.getElementById("cancel");
+  if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
+  const form = document.getElementById("form-settings");
+  if (form) form.addEventListener("submit", updateSettings);
+  const greetingElInit = document.getElementById("greeting");
+  if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
+  const profileInit = document.getElementById("profile");
+  if (profileInit) profileInit.textContent = `Profile: ${profileName}`;
 
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");
   const profileEl = document.getElementById("profile");
-  greetingEl.classList.add("fancy-appear");
-  profileEl.classList.add("fancy-appear");
+  if (greetingEl) greetingEl.classList.add("fancy-appear");
+  if (profileEl) profileEl.classList.add("fancy-appear");
 
   // Wait until both animations finish, then fade in clock and footer
-  await Promise.all(
-    [greetingEl, profileEl].map(
-      (el) =>
-        new Promise((resolve) => {
-          // If the animation is not applied for any reason, resolve quickly
-          let resolved = false;
-          const done = () => {
-            if (resolved) return;
-            resolved = true;
-            el.removeEventListener("animationend", done);
-            resolve();
-          };
-          el.addEventListener("animationend", done, { once: true });
-          // Safety timeout in case no event fires
-          setTimeout(done, 800);
-        })
-    )
-  );
+  const animTargets = [greetingEl, profileEl].filter(Boolean);
+  if (animTargets.length) {
+    await Promise.all(
+      animTargets.map(
+        (el) =>
+          new Promise((resolve) => {
+            let resolved = false;
+            const done = () => {
+              if (resolved) return;
+              resolved = true;
+              el.removeEventListener("animationend", done);
+              resolve();
+            };
+            el.addEventListener("animationend", done, { once: true });
+            setTimeout(done, 800);
+          })
+      )
+    );
+  }
 
-  document.getElementById("clock").classList.add("show");
-  document.querySelector("footer").classList.add("show");
+  const clockEl = document.getElementById("clock");
+  if (clockEl) clockEl.classList.add("show");
+  const footer = document.querySelector("footer");
+  if (footer) footer.classList.add("show");
 })();
