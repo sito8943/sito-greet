@@ -314,3 +314,22 @@ input {
   opacity: 1;
   transition: opacity 400ms ease-in;
 }
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Ensure utility animations don't run */
+  .fancy-appear {
+    animation: none !important;
+  }
+
+  /* Show fades instantly when toggled */
+  .fade-target.show {
+    transition: none !important;
+  }
+}

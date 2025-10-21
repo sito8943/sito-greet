@@ -21,6 +21,18 @@ function getGreeting() {
   return "Good evening";
 }
 
+function prefersReducedMotion() {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
 function hasBrowserStorage() {
   try {
     return (
@@ -103,6 +115,7 @@ async function updateSettings(e) {
 }
 
 (async () => {
+  const reducedMotion = prefersReducedMotion();
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
@@ -126,12 +139,14 @@ async function updateSettings(e) {
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");
   const profileEl = document.getElementById("profile");
-  if (greetingEl) greetingEl.classList.add("fancy-appear");
-  if (profileEl) profileEl.classList.add("fancy-appear");
+  if (!reducedMotion) {
+    if (greetingEl) greetingEl.classList.add("fancy-appear");
+    if (profileEl) profileEl.classList.add("fancy-appear");
+  }
 
   // Wait until both animations finish, then fade in clock and footer
   const animTargets = [greetingEl, profileEl].filter(Boolean);
-  if (animTargets.length) {
+  if (!reducedMotion && animTargets.length) {
     await Promise.all(
       animTargets.map(
         (el) =>
