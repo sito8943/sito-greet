@@ -81,4 +81,33 @@ document.getElementById("clock").textContent = getFormattedDateTime();
     .addEventListener("submit", updateSettings);
   document.getElementById("greeting").textContent = `${greeting}, ${username}!`;
   document.getElementById("profile").textContent = `Profile: ${profileName}`;
+
+  // Trigger entrance animations for greeting and profile
+  const greetingEl = document.getElementById("greeting");
+  const profileEl = document.getElementById("profile");
+  greetingEl.classList.add("fancy-appear");
+  profileEl.classList.add("fancy-appear");
+
+  // Wait until both animations finish, then fade in clock and footer
+  await Promise.all(
+    [greetingEl, profileEl].map(
+      (el) =>
+        new Promise((resolve) => {
+          // If the animation is not applied for any reason, resolve quickly
+          let resolved = false;
+          const done = () => {
+            if (resolved) return;
+            resolved = true;
+            el.removeEventListener("animationend", done);
+            resolve();
+          };
+          el.addEventListener("animationend", done, { once: true });
+          // Safety timeout in case no event fires
+          setTimeout(done, 800);
+        })
+    )
+  );
+
+  document.getElementById("clock").classList.add("show");
+  document.querySelector("footer").classList.add("show");
 })();

@@ -280,3 +280,37 @@ input {
 .settings-menu button:hover {
   background-color: var(--color-primary);
 }
+
+.fancy-appear {
+  animation: fancy-appear 0.6s cubic-bezier(0.25, 1.5, 0.5, 1) 1;
+}
+
+@keyframes fancy-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.9);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.05);
+  }
+
+  80% {
+    transform: translateY(0) scale(0.97);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Simple opacity fade utility for staged reveals */
+.fade-target {
+  opacity: 0;
+}
+
+.fade-target.show {
+  opacity: 1;
+  transition: opacity 400ms ease-in;
+}
