@@ -1,2 +1,7 @@
-.DS_store
+.DS_Store
 __MACOSX
+web-ext-artifacts
+*.zip
+*.env
+*.xpi
+.amo-upload-uuid

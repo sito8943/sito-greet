@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Greeting New Tab",
-  "version": "1.0",
-  "description": "Shows a greeting with the current user's name and profile name.",
+  "version": "1.0.1",
+  "description": "Shows a greeting with the given user's name and profile name.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "@sito-greet.sito8943.com",
+      "strict_min_version": "109.0"
+    }
+  },
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
   "permissions": ["storage"],
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Settings"
-  },
   "icons": {
     "48": "icon.png"
   }
