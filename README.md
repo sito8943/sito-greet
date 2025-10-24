@@ -15,7 +15,6 @@ A minimal Firefox extension that replaces the default new tab page with a friend
 
 - `manifest.json` (MV3) overrides the New Tab page to `newtab.html` and defines a toolbar popup (`popup.html`).
 - `newtab.js` renders the greeting and a ticking clock, reading values from `browser.storage.local`.
-- `popup.js` lets you update `username` and `profile_name` and saves them to storage.
 - Styling is handled in `style.css` and shared by both pages.
 
 ## File Structure
