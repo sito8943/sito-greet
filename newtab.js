@@ -1,3 +1,104 @@
+// --- Simple i18n support (EN/ES) ---
+const CURRENT_LANG = ((navigator.language || "").toLowerCase().startsWith("es")) ? "es" : "en";
+
+const I18N = {
+  en: {
+    titleNewTab: "New Tab",
+    settings: "Settings",
+    whoAreYou: "Who are you?",
+    whichProfile: "Which profile is this?",
+    usernamePlaceholder: "Type your username here",
+    profilePlaceholder: "Type profile name here",
+    disableAnimations: "Disable animations",
+    weather: "Weather",
+    weatherEnabled: "Show weather on new tab",
+    latitude: "Latitude",
+    longitude: "Longitude",
+    tempUnits: "Temperature units",
+    celsius: "Celsius (°C)",
+    fahrenheit: "Fahrenheit (°F)",
+    apiBase: "Open‑Meteo API base (optional)",
+    save: "Save",
+    cancel: "Cancel",
+    madeBy: "Made by",
+    profileLabel: "Profile",
+    fetchingWeather: "Fetching weather…",
+    setLocationToSeeWeather: "Set your location in Settings to see the weather.",
+    weatherOff: "Weather took the day off.",
+    weatherUnavailable: "Weather unavailable. Maybe it's shy.",
+    goodMorning: "Good morning",
+    goodAfternoon: "Good afternoon",
+    goodEvening: "Good evening",
+  },
+  es: {
+    titleNewTab: "Nueva pestaña",
+    settings: "Ajustes",
+    whoAreYou: "¿Quién eres?",
+    whichProfile: "¿Qué perfil es este?",
+    usernamePlaceholder: "Escribe tu nombre de usuario",
+    profilePlaceholder: "Escribe el nombre del perfil",
+    disableAnimations: "Desactivar animaciones",
+    weather: "Clima",
+    weatherEnabled: "Mostrar el clima en nueva pestaña",
+    latitude: "Latitud",
+    longitude: "Longitud",
+    tempUnits: "Unidades de temperatura",
+    celsius: "Celsius (°C)",
+    fahrenheit: "Fahrenheit (°F)",
+    apiBase: "Base de la API Open‑Meteo (opcional)",
+    save: "Guardar",
+    cancel: "Cancelar",
+    madeBy: "Hecho por",
+    profileLabel: "Perfil",
+    fetchingWeather: "Obteniendo clima…",
+    setLocationToSeeWeather: "Configura tu ubicación en Ajustes para ver el clima.",
+    weatherOff: "El clima se tomó el día libre.",
+    weatherUnavailable: "Clima no disponible. Quizás está tímido.",
+    goodMorning: "Buenos días",
+    goodAfternoon: "Buenas tardes",
+    goodEvening: "Buenas noches",
+  },
+};
+
+function tr(key) {
+  return (I18N[CURRENT_LANG] && I18N[CURRENT_LANG][key]) || I18N.en[key] || key;
+}
+
+function applyI18n() {
+  try {
+    // Set document language attribute
+    if (document && document.documentElement) {
+      document.documentElement.setAttribute("lang", CURRENT_LANG);
+    }
+    document.title = tr("titleNewTab");
+    const mapText = [
+      ["i18n-settings-title", "settings"],
+      ["i18n-who-are-you", "whoAreYou"],
+      ["i18n-which-profile", "whichProfile"],
+      ["i18n-disable-animations", "disableAnimations"],
+      ["i18n-weather-title", "weather"],
+      ["i18n-weather-enabled", "weatherEnabled"],
+      ["i18n-label-lat", "latitude"],
+      ["i18n-label-lon", "longitude"],
+      ["i18n-label-temp-units", "tempUnits"],
+      ["i18n-option-celsius", "celsius"],
+      ["i18n-option-fahrenheit", "fahrenheit"],
+      ["i18n-label-api-base", "apiBase"],
+      ["i18n-save-button", "save"],
+      ["cancel", "cancel"],
+      ["i18n-made-by", "madeBy"],
+    ];
+    for (const [id, key] of mapText) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = tr(key);
+    }
+    const usernameInput = document.getElementById("input-username");
+    if (usernameInput) usernameInput.placeholder = tr("usernamePlaceholder");
+    const profileInput = document.getElementById("input-profile");
+    if (profileInput) profileInput.placeholder = tr("profilePlaceholder");
+  } catch (_) {}
+}
+
 function getFormattedDateTime(date) {
   const now = date ? new Date(date) : new Date();
 
@@ -16,9 +117,9 @@ function getFormattedDateTime(date) {
 
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+  if (hour < 12) return tr("goodMorning");
+  if (hour < 18) return tr("goodAfternoon");
+  return tr("goodEvening");
 }
 
 function prefersReducedMotion() {
@@ -154,97 +255,96 @@ function weatherCodeToMessage(code, temp, wind, units) {
   const w = Number(wind);
 
   let base = "";
-
+  const isEs = CURRENT_LANG === "es";
   switch (c) {
     case 0:
-      base = "Cielo despejado ☀️. Día ideal para salir.";
+      base = isEs ? "Cielo despejado ☀️. Día ideal para salir." : "Clear sky ☀️. Perfect day to go out.";
       break;
     case 1:
-      base = "Mayormente despejado 🌤️. Unas pocas nubes aquí y allá.";
+      base = isEs ? "Mayormente despejado 🌤️. Unas pocas nubes aquí y allá." : "Mostly clear 🌤️. A few clouds around.";
       break;
     case 2:
-      base = "Parcialmente nublado ⛅. Tal vez salga el sol luego.";
+      base = isEs ? "Parcialmente nublado ⛅. Tal vez salga el sol luego." : "Partly cloudy ⛅. Sun may pop out later.";
       break;
     case 3:
-      base = "Cielo nublado ☁️. Día algo gris, pero tranquilo.";
+      base = isEs ? "Cielo nublado ☁️. Día algo gris, pero tranquilo." : "Overcast ☁️. A bit gray, but calm.";
       break;
     case 45:
     case 48:
-      base = "Niebla 🌫️. Maneja con precaución.";
+      base = isEs ? "Niebla 🌫️. Maneja con precaución." : "Fog 🌫️. Drive carefully.";
       break;
     case 51:
-      base = "Llovizna ligera 🌦️. Lleva paraguas por si acaso ☂️.";
+      base = isEs ? "Llovizna ligera 🌦️. Lleva paraguas por si acaso ☂️." : "Light drizzle 🌦️. Bring an umbrella just in case ☂️.";
       break;
     case 53:
-      base = "Llovizna moderada 🌧️. Mejor tener paraguas a mano ☔.";
+      base = isEs ? "Llovizna moderada 🌧️. Mejor tener paraguas a mano ☔." : "Moderate drizzle 🌧️. Keep an umbrella handy ☔.";
       break;
     case 55:
-      base = "Llovizna intensa 🌧️. Ideal para quedarse en casa con café ☕.";
+      base = isEs ? "Llovizna intensa 🌧️. Ideal para quedarse en casa con café ☕." : "Heavy drizzle 🌧️. Cozy coffee weather ☕.";
       break;
     case 56:
     case 57:
-      base = "Llovizna helada ❄️. Cuidado con superficies resbaladizas.";
+      base = isEs ? "Llovizna helada ❄️. Cuidado con superficies resbaladizas." : "Freezing drizzle ❄️. Watch for slippery surfaces.";
       break;
     case 61:
-      base = "Lluvia ligera 🌦️. Un paraguas podría ser buena idea ☂️.";
+      base = isEs ? "Lluvia ligera 🌦️. Un paraguas podría ser buena idea ☂️." : "Light rain 🌦️. An umbrella might help ☂️.";
       break;
     case 63:
-      base = "Lluvia moderada 🌧️. Evita mojarte sin abrigo.";
+      base = isEs ? "Lluvia moderada 🌧️. Evita mojarte sin abrigo." : "Moderate rain 🌧️. Stay dry out there.";
       break;
     case 65:
-      base = "Lluvia intensa ⛈️. Mejor evitar salir sin necesidad.";
+      base = isEs ? "Lluvia intensa ⛈️. Mejor evitar salir sin necesidad." : "Heavy rain ⛈️. Best to avoid going out.";
       break;
     case 66:
     case 67:
-      base = "Lluvia helada ❄️. Abrígate y camina con cuidado.";
+      base = isEs ? "Lluvia helada ❄️. Abrígate y camina con cuidado." : "Freezing rain ❄️. Bundle up and walk carefully.";
       break;
     case 71:
-      base = "Nieve ligera 🌨️. Puede verse bonito afuera.";
+      base = isEs ? "Nieve ligera 🌨️. Puede verse bonito afuera." : "Light snow 🌨️. Looks pretty outside.";
       break;
     case 73:
-      base = "Nieve moderada ❄️. Abrígate bien.";
+      base = isEs ? "Nieve moderada ❄️. Abrígate bien." : "Moderate snow ❄️. Dress warm.";
       break;
     case 75:
-      base = "Nieve intensa 🌨️❄️. Mejor permanecer en interiores.";
+      base = isEs ? "Nieve intensa 🌨️❄️. Mejor permanecer en interiores." : "Heavy snow 🌨️❄️. Better stay indoors.";
       break;
     case 77:
-      base = "Caen granitos de nieve 🌨️.";
+      base = isEs ? "Caen granitos de nieve 🌨️." : "Snow grains falling 🌨️.";
       break;
     case 80:
-      base = "Chubascos débiles 🌦️. Tal vez llueva un poco.";
+      base = isEs ? "Chubascos débiles 🌦️. Tal vez llueva un poco." : "Light showers 🌦️. Might rain a bit.";
       break;
     case 81:
-      base = "Chubascos moderados 🌧️. Lleva paraguas por si acaso ☂️.";
+      base = isEs ? "Chubascos moderados 🌧️. Lleva paraguas por si acaso ☂️." : "Moderate showers 🌧️. Umbrella could help ☂️.";
       break;
     case 82:
-      base = "Chubascos fuertes ⛈️. Mejor tener paraguas o capucha.";
+      base = isEs ? "Chubascos fuertes ⛈️. Mejor tener paraguas o capucha." : "Heavy showers ⛈️. Umbrella or hood recommended.";
       break;
     case 85:
-      base = "Chubascos de nieve 🌨️. Puede acumularse en el suelo.";
+      base = isEs ? "Chubascos de nieve 🌨️. Puede acumularse en el suelo." : "Snow showers 🌨️. Might accumulate on the ground.";
       break;
     case 86:
-      base = "Chubascos de nieve intensos ❄️. Precaución al salir.";
+      base = isEs ? "Chubascos de nieve intensos ❄️. Precaución al salir." : "Heavy snow showers ❄️. Use caution.";
       break;
     case 95:
-      base = "Tormenta eléctrica ⚡. Quédate bajo techo si puedes.";
+      base = isEs ? "Tormenta eléctrica ⚡. Quédate bajo techo si puedes." : "Thunderstorm ⚡. Stay indoors if you can.";
       break;
     case 96:
     case 99:
-      base = "Tormenta con granizo ⛈️. Evita salir por seguridad.";
+      base = isEs ? "Tormenta con granizo ⛈️. Evita salir por seguridad." : "Hailstorm ⛈️. Best to stay inside.";
       break;
     default:
-      base = "Clima no identificado 🤔.";
+      base = isEs ? "Clima no identificado 🤔." : "Weather not identified 🤔.";
   }
 
-  // Extras según temperatura y viento
+  // Extras according to temperature and wind
   const extras = [];
-  if (!Number.isNaN(w) && w >= 35) extras.push("Hace bastante viento 💨.");
+  if (!Number.isNaN(w) && w >= 35) extras.push(isEs ? "Hace bastante viento 💨." : "Quite windy 💨.");
   if (!Number.isNaN(t)) {
     const hot = units === "fahrenheit" ? t >= 86 : t >= 30;
     const cold = units === "fahrenheit" ? t <= 32 : t <= 0;
-
-    if (hot) extras.push("Hace calor 🥵, hidrátate bien.");
-    else if (cold) extras.push("Hace frío 🧣, abrígate bien.");
+    if (hot) extras.push(isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated.");
+    else if (cold) extras.push(isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm.");
   }
 
   return [base, ...extras].join(" ");
@@ -298,15 +398,15 @@ async function renderWeather() {
 
     const coords = await getCoordsPreferGeolocation(settings.lat, settings.lon);
     if (!coords) {
-      el.textContent = "Set your location in Settings to see the weather.";
+      el.textContent = tr("setLocationToSeeWeather");
       return;
     }
 
-    el.textContent = "Fetching weather…";
+    el.textContent = tr("fetchingWeather");
     const data = await fetchOpenMeteo({ lat: coords.lat, lon: coords.lon, units: settings.units, apiBase: settings.apiBase });
     const cw = data && data.current_weather;
     if (!cw) {
-      el.textContent = "Weather took the day off.";
+      el.textContent = tr("weatherOff");
       return;
     }
 
@@ -326,7 +426,7 @@ async function renderWeather() {
     el.textContent = `${icon} ${tempTxt} — ${msg}`;
   } catch (err) {
     const el = document.getElementById("weather");
-    if (el) el.textContent = "Weather unavailable. Maybe it's shy.";
+    if (el) el.textContent = tr("weatherUnavailable");
   }
 }
 
@@ -363,7 +463,7 @@ async function updateSettings(e) {
   const greetingEl = document.getElementById("greeting");
   if (greetingEl) greetingEl.textContent = `${greeting}, ${username}!`;
   const profileTextEl = document.getElementById("profile");
-  if (profileTextEl) profileTextEl.textContent = `Profile: ${profile_name}`;
+  if (profileTextEl) profileTextEl.textContent = `${tr("profileLabel")}: ${profile_name}`;
 
   if (hasBrowserStorage()) {
     const toSet = { username, profile_name, disable_animations, weather_enabled, weather_units, weather_api_base };
@@ -400,6 +500,8 @@ async function updateSettings(e) {
 }
 
 (async () => {
+  // Apply i18n labels/placeholders ASAP
+  applyI18n();
   const disableAnimations = await getDisableAnimations();
   const reducedMotion = prefersReducedMotion() || disableAnimations;
   const greeting = getGreeting();
@@ -427,7 +529,7 @@ async function updateSettings(e) {
   const greetingElInit = document.getElementById("greeting");
   if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
   const profileInit = document.getElementById("profile");
-  if (profileInit) profileInit.textContent = `Profile: ${profileName}`;
+  if (profileInit) profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
 
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");

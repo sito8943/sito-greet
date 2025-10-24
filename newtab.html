@@ -18,52 +18,42 @@
         <p id="profile"></p>
     </main>
     <dialog id="dialog-settings">
-        <h2>Settings</h2>
+        <h2 id="i18n-settings-title">Settings</h2>
         <form id="form-settings" method="dialog">
             <label for="username">
-                Who are you?
+                <span id="i18n-who-are-you">Who are you?</span>
             </label>
             <input id="input-username" value="" placeholder="Type your username here">
             <label for="username">
-                Which profile is this?
+                <span id="i18n-which-profile">Which profile is this?</span>
             </label>
             <input id="input-profile" value="" placeholder="Type profile name here">
             <label for="input-disable-animations" class="switch">
                 <input id="input-disable-animations" type="checkbox">
                 <span class="slider round"></span>
-                <span>
+                <span id="i18n-disable-animations">
                     Disable animations
                 </span>
             </label>
-            <h3>Weather</h3>
+            <h3 id="i18n-weather-title">Weather</h3>
             <label for="input-weather-enabled" class="switch">
                 <input id="input-weather-enabled" type="checkbox">
                 <span class="slider round"></span>
-                <span>
-                    Show weather on new tab
-                </span>
+                <span id="i18n-weather-enabled">Show weather on new tab</span>
             </label>
-            <label for="input-weather-lat">
-                Latitude
-            </label>
+            <label for="input-weather-lat" id="i18n-label-lat">Latitude</label>
             <input id="input-weather-lat" type="number" step="any" placeholder="e.g. 40.4168">
-            <label for="input-weather-lon">
-                Longitude
-            </label>
+            <label for="input-weather-lon" id="i18n-label-lon">Longitude</label>
             <input id="input-weather-lon" type="number" step="any" placeholder="e.g. -3.7038">
-            <label for="input-weather-units">
-                Temperature units
-            </label>
+            <label for="input-weather-units" id="i18n-label-temp-units">Temperature units</label>
             <select id="input-weather-units">
-                <option value="celsius">Celsius (°C)</option>
-                <option value="fahrenheit">Fahrenheit (°F)</option>
+                <option id="i18n-option-celsius" value="celsius">Celsius (°C)</option>
+                <option id="i18n-option-fahrenheit" value="fahrenheit">Fahrenheit (°F)</option>
             </select>
-            <label for="input-weather-api">
-                Open‑Meteo API base (optional)
-            </label>
+            <label for="input-weather-api" id="i18n-label-api-base">Open‑Meteo API base (optional)</label>
             <input id="input-weather-api" placeholder="https://api.open-meteo.com/v1/forecast">
             <div class="button-row right">
-                <button class="submit button">Save</button>
+                <button id="i18n-save-button" class="submit button">Save</button>
                 <button id="cancel" type="button" class="outlined button">Cancel</button>
             </div>
         </form>
@@ -76,7 +66,7 @@
             </svg>
         </a>
         <p>
-            Made by
+            <span id="i18n-made-by">Made by</span>
             <a rel="noopener" target="_blank"
                 href="https://sito8943.com/?utm_source=sito-greet&utm_medium=about_page&utm_campaign=portfolio_link">
                 @sito8943
