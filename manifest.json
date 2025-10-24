@@ -17,6 +17,9 @@
     "newtab": "newtab.html"
   },
   "permissions": ["storage"],
+  "host_permissions": [
+    "https://api.open-meteo.com/*"
+  ],
   "icons": {
     "48": "icon.png"
   }

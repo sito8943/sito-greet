@@ -11,6 +11,7 @@
 <body>
     <header>
         <p class="clock fade-target" id="clock"></p>
+        <p id="weather" class="weather"></p>
     </header>
     <main>
         <h1 id="greeting"></h1>
@@ -34,6 +35,33 @@
                     Disable animations
                 </span>
             </label>
+            <h3>Weather</h3>
+            <label for="input-weather-enabled" class="switch">
+                <input id="input-weather-enabled" type="checkbox">
+                <span class="slider round"></span>
+                <span>
+                    Show weather on new tab
+                </span>
+            </label>
+            <label for="input-weather-lat">
+                Latitude
+            </label>
+            <input id="input-weather-lat" type="number" step="any" placeholder="e.g. 40.4168">
+            <label for="input-weather-lon">
+                Longitude
+            </label>
+            <input id="input-weather-lon" type="number" step="any" placeholder="e.g. -3.7038">
+            <label for="input-weather-units">
+                Temperature units
+            </label>
+            <select id="input-weather-units">
+                <option value="celsius">Celsius (°C)</option>
+                <option value="fahrenheit">Fahrenheit (°F)</option>
+            </select>
+            <label for="input-weather-api">
+                Open‑Meteo API base (optional)
+            </label>
+            <input id="input-weather-api" placeholder="https://api.open-meteo.com/v1/forecast">
             <div class="button-row right">
                 <button class="submit button">Save</button>
                 <button id="cancel" type="button" class="outlined button">Cancel</button>

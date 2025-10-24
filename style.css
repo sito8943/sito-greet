@@ -75,6 +75,7 @@ button,
 h5,
 label,
 input,
+select,
 h6 {
   font-family: "Roboto", sans-serif;
   color: var(--color-body-white);
@@ -125,6 +126,7 @@ body {
 }
 
 body,
+header,
 main {
   display: flex;
   justify-content: center;
@@ -224,6 +226,15 @@ input {
   background-color: var(--color-black);
 }
 
+select {
+  width: 100%;
+  border-radius: 15rem;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  box-sizing: border-box;
+  background-color: var(--color-black);
+}
+
 .clock {
   text-transform: capitalize;
 }
@@ -250,6 +261,11 @@ input {
 
 .icon-button:hover {
   color: var(--color-primary);
+}
+
+.weather {
+  text-align: center;
+  margin-top: 1rem;
 }
 
 .button {
