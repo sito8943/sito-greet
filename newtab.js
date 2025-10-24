@@ -76,6 +76,23 @@ async function getProfileName() {
   return stored.profile_name || "Default Profile";
 }
 
+async function getDisableAnimations() {
+  let stored = {};
+  if (hasBrowserStorage()) {
+    stored = await browser.storage.local.get("disable_animations");
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const v = localStorage.getItem("disable_animations");
+      if (v !== null) stored.disable_animations = v === "true";
+    } catch (_) {}
+  }
+
+  const checkbox = document.getElementById("input-disable-animations");
+  if (checkbox) checkbox.checked = Boolean(stored.disable_animations);
+
+  return Boolean(stored.disable_animations);
+}
+
 function openDialog() {
   const dialog = document.getElementById("dialog-settings");
   if (dialog && typeof dialog.showModal === "function") dialog.showModal();
@@ -89,8 +106,10 @@ function closeDialog() {
 async function updateSettings(e) {
   const usernameEl = document.getElementById("input-username");
   const profileEl = document.getElementById("input-profile");
+  const disableAnimationsEl = document.getElementById("input-disable-animations");
   const username = (usernameEl && usernameEl.value) || "User";
   const profile_name = (profileEl && profileEl.value) || "Default Profile";
+  const disable_animations = Boolean(disableAnimationsEl && disableAnimationsEl.checked);
 
   const greeting = getGreeting();
 
@@ -100,12 +119,20 @@ async function updateSettings(e) {
   if (profileTextEl) profileTextEl.textContent = `Profile: ${profile_name}`;
 
   if (hasBrowserStorage()) {
-    await browser.storage.local.set({ username, profile_name });
+    await browser.storage.local.set({ username, profile_name, disable_animations });
   } else if (typeof localStorage !== "undefined") {
     try {
       localStorage.setItem("username", username);
       localStorage.setItem("profile_name", profile_name);
+      localStorage.setItem("disable_animations", String(disable_animations));
     } catch (_) {}
+  }
+
+  // Reflect setting to CSS via root data attribute
+  const root = document.documentElement;
+  if (root) {
+    if (disable_animations) root.setAttribute("data-animations", "off");
+    else root.removeAttribute("data-animations");
   }
 }
 
@@ -115,10 +142,18 @@ async function updateSettings(e) {
 }
 
 (async () => {
-  const reducedMotion = prefersReducedMotion();
+  const disableAnimations = await getDisableAnimations();
+  const reducedMotion = prefersReducedMotion() || disableAnimations;
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
+
+  // Expose to CSS via root data attribute for animation control
+  const root = document.documentElement;
+  if (root) {
+    if (reducedMotion) root.setAttribute("data-animations", "off");
+    else root.removeAttribute("data-animations");
+  }
 
   setInterval(() => {
     const clock = document.getElementById("clock");
