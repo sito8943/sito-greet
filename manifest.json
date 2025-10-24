@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sito Greet",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "license": "MPL-2.0",
   "description": "Shows a greeting with the given user's name and profile name on new tabs.",
   "browser_specific_settings": {
