@@ -1,3 +1,5 @@
+<img width="2932" height="1488" alt="image" src="https://github.com/user-attachments/assets/63cc432b-e566-4941-8068-d9ccd66a3a75" />
+
 # Greeting New Tab (Firefox Extension)
 
 A minimal Firefox extension that replaces the default new tab page with a friendly greeting and a live, locale-aware clock. It lets you set your display name and a profile name, which are saved in browser storage. A small toolbar popup is included for quick edits.
