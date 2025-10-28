@@ -11,6 +11,7 @@ A minimal Firefox extension that replaces the default new tab page with a friend
 - Customizable user name and profile name (persisted via `storage`).
 - Toolbar popup to quickly update values.
 - In-page settings menu and dialog to change the username.
+- Background customization: choose default gradient, a solid color, or upload an image.
 - Minimal permissions (only `storage`).
 
 ## How It Works
@@ -43,6 +44,7 @@ Note: Temporary add-ons are unloaded when Firefox restarts. For day‑to‑day d
   - Name (`username`)
   - Profile name (`profile_name`)
 - Alternatively, on the New Tab page, click the settings button to open the in-page menu and change the username via the dialog.
+  - Background: select Default, Solid color (with color picker), or Image (upload stored locally in extension storage).
 
 ## Development
 
@@ -72,4 +74,3 @@ Edits to `newtab.*` or `style.css` are picked up on reload. Values are stored wi
 
 - The clock uses `navigator.language` when available, defaulting to `es-ES` for formatting.
 - If you customize links or icons in the footer of `newtab.html`, update the `href` as needed.
-
