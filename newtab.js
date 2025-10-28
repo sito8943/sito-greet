@@ -10,6 +10,7 @@ const I18N = {
     usernamePlaceholder: "Type your username here",
     profilePlaceholder: "Type profile name here",
     disableAnimations: "Disable animations",
+    information: "Browser information",
     weather: "Weather",
     weatherEnabled: "Show weather on new tab",
     latitude: "Latitude",
@@ -17,7 +18,7 @@ const I18N = {
     tempUnits: "Temperature units",
     celsius: "Celsius (°C)",
     fahrenheit: "Fahrenheit (°F)",
-    apiBase: "Open‑Meteo API base (optional)",
+    apiBase: "Open-Meteo API base (optional)",
     save: "Save",
     cancel: "Cancel",
     madeBy: "Made by",
@@ -29,6 +30,13 @@ const I18N = {
     goodMorning: "Good morning",
     goodAfternoon: "Good afternoon",
     goodEvening: "Good evening",
+    bgMode: "Background Mode",
+    defaultGradient: "Default gradient",
+    solidColor: "Solid color",
+    image: "Image",
+    backgroundColor: "Background color",
+    backgroundImage: "Background image",
+    clearImage: "Clear image",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -38,6 +46,7 @@ const I18N = {
     usernamePlaceholder: "Escribe tu nombre de usuario",
     profilePlaceholder: "Escribe el nombre del perfil",
     disableAnimations: "Desactivar animaciones",
+    information: "Información del navegador",
     weather: "Clima",
     weatherEnabled: "Mostrar el clima en nueva pestaña",
     latitude: "Latitud",
@@ -45,7 +54,7 @@ const I18N = {
     tempUnits: "Unidades de temperatura",
     celsius: "Celsius (°C)",
     fahrenheit: "Fahrenheit (°F)",
-    apiBase: "Base de la API Open‑Meteo (opcional)",
+    apiBase: "Base de la API Open-Meteo (opcional)",
     save: "Guardar",
     cancel: "Cancelar",
     madeBy: "Hecho por",
@@ -57,6 +66,13 @@ const I18N = {
     goodMorning: "Buenos días",
     goodAfternoon: "Buenas tardes",
     goodEvening: "Buenas noches",
+    bgMode: "Tipo de fondo",
+    defaultGradient: "Gradiente por defecto",
+    solidColor: "Color sólido",
+    image: "Imagen",
+    backgroundColor: "Color de fondo",
+    backgroundImage: "Imagen de fondo",
+    clearImage: "Borrar imagen",
   },
 };
 
@@ -76,6 +92,7 @@ function applyI18n() {
       ["i18n-who-are-you", "whoAreYou"],
       ["i18n-which-profile", "whichProfile"],
       ["i18n-disable-animations", "disableAnimations"],
+      ["i18n-information-title", "information"],
       ["i18n-weather-title", "weather"],
       ["i18n-weather-enabled", "weatherEnabled"],
       ["i18n-label-lat", "latitude"],
@@ -87,6 +104,12 @@ function applyI18n() {
       ["i18n-save-button", "save"],
       ["cancel", "cancel"],
       ["i18n-made-by", "madeBy"],
+      ["i18n-label-bg-mode", "bgMode"],
+      ["i18n-option-bg-default", "defaultGradient"],
+      ["i18n-option-bg-color", "solidColor"],
+      ["i18n-option-bg-image", "image"],
+      ["i18n-label-bg-color", "backgroundColor"],
+      ["i18n-label-bg-image", "backgroundImage"],
     ];
     for (const [id, key] of mapText) {
       const el = document.getElementById(id);
@@ -96,6 +119,57 @@ function applyI18n() {
     if (usernameInput) usernameInput.placeholder = tr("usernamePlaceholder");
     const profileInput = document.getElementById("input-profile");
     if (profileInput) profileInput.placeholder = tr("profilePlaceholder");
+  } catch (_) {}
+}
+
+async function getBackgroundSettings() {
+  let stored = {};
+  if (hasBrowserStorage()) {
+    stored = await browser.storage.local.get([
+      "background_mode",
+      "background_color",
+      "background_image",
+    ]);
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const mode = localStorage.getItem("background_mode");
+      const color = localStorage.getItem("background_color");
+      const image = localStorage.getItem("background_image");
+      if (mode) stored.background_mode = mode;
+      if (color) stored.background_color = color;
+      if (image) stored.background_image = image;
+    } catch (_) {}
+  }
+
+  const modeEl = document.getElementById("input-background-mode");
+  if (modeEl) modeEl.value = stored.background_mode || "default";
+  const colorEl = document.getElementById("input-background-color");
+  if (colorEl && stored.background_color) colorEl.value = stored.background_color;
+
+  return {
+    mode: stored.background_mode || "default",
+    color: stored.background_color || "#1b1b1b",
+    image: stored.background_image || "",
+  };
+}
+
+function applyBackground({ mode, color, image }) {
+  try {
+    const body = document.body;
+    if (!body) return;
+    body.dataset.bg = mode || "default";
+    if (mode === "color") {
+      body.style.backgroundColor = color || "#1b1b1b";
+      body.style.backgroundImage = "none";
+    } else if (mode === "image" && image) {
+      body.style.backgroundImage = `url(${image})`;
+      body.style.backgroundColor = "#000000";
+    } else {
+      // Default gradient; rely on CSS
+      body.style.backgroundImage = "";
+      // Keep fallback color consistent
+      body.style.backgroundColor = "";
+    }
   } catch (_) {}
 }
 
@@ -441,6 +515,7 @@ function closeDialog() {
 }
 
 async function updateSettings(e) {
+  // If form method is dialog, let it close; but handle async reads first
   const usernameEl = document.getElementById("input-username");
   const profileEl = document.getElementById("input-profile");
   const disableAnimationsEl = document.getElementById("input-disable-animations");
@@ -458,6 +533,30 @@ async function updateSettings(e) {
   const weather_units = weatherUnitsEl && weatherUnitsEl.value === "fahrenheit" ? "fahrenheit" : "celsius";
   const weather_api_base = (weatherApiEl && weatherApiEl.value && weatherApiEl.value.trim()) || "";
 
+  // Background controls
+  const bgModeEl = document.getElementById("input-background-mode");
+  const bgColorEl = document.getElementById("input-background-color");
+  const bgImageEl = document.getElementById("input-background-image");
+  const background_mode = (bgModeEl && bgModeEl.value) || "default";
+  const background_color = (bgColorEl && bgColorEl.value) || "#1b1b1b";
+
+  // Read any newly selected image file; otherwise keep existing stored one
+  let background_image = "";
+  try {
+    const current = await (hasBrowserStorage()
+      ? browser.storage.local.get("background_image")
+      : Promise.resolve({ background_image: typeof localStorage !== "undefined" ? localStorage.getItem("background_image") : "" }));
+    background_image = (current && current.background_image) || "";
+  } catch (_) {}
+  if (bgImageEl && bgImageEl.files && bgImageEl.files[0]) {
+    background_image = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(bgImageEl.files[0]);
+    });
+  }
+
   const greeting = getGreeting();
 
   const greetingEl = document.getElementById("greeting");
@@ -466,7 +565,8 @@ async function updateSettings(e) {
   if (profileTextEl) profileTextEl.textContent = `${tr("profileLabel")}: ${profile_name}`;
 
   if (hasBrowserStorage()) {
-    const toSet = { username, profile_name, disable_animations, weather_enabled, weather_units, weather_api_base };
+    const toSet = { username, profile_name, disable_animations, weather_enabled, weather_units, weather_api_base, background_mode, background_color };
+    if (background_mode === "image") toSet.background_image = background_image;
     if (typeof weather_latitude === "number") toSet.weather_latitude = weather_latitude;
     if (typeof weather_longitude === "number") toSet.weather_longitude = weather_longitude;
     await browser.storage.local.set(toSet);
@@ -480,6 +580,9 @@ async function updateSettings(e) {
       if (typeof weather_longitude === "number") localStorage.setItem("weather_longitude", String(weather_longitude));
       localStorage.setItem("weather_units", weather_units);
       localStorage.setItem("weather_api_base", weather_api_base);
+      localStorage.setItem("background_mode", background_mode);
+      localStorage.setItem("background_color", background_color);
+      if (background_mode === "image" && background_image) localStorage.setItem("background_image", background_image);
     } catch (_) {}
   }
 
@@ -492,6 +595,9 @@ async function updateSettings(e) {
 
   // Re-render weather in case settings changed
   renderWeather();
+
+  // Apply background after saving
+  applyBackground({ mode: background_mode, color: background_color, image: background_image });
 }
 
 {
@@ -526,6 +632,33 @@ async function updateSettings(e) {
   if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
   const form = document.getElementById("form-settings");
   if (form) form.addEventListener("submit", updateSettings);
+  // Background controls visibility + clear image
+  const modeEl = document.getElementById("input-background-mode");
+  const colorEl = document.getElementById("input-background-color");
+  const colorLabel = document.getElementById("i18n-label-bg-color");
+  const fileEl = document.getElementById("input-background-image");
+  const fileLabel = document.getElementById("i18n-label-bg-image");
+  const clearBtn = document.getElementById("btn-clear-bg-image");
+  const refreshVisibility = () => {
+    const mode = modeEl ? modeEl.value : "default";
+    if (colorEl) colorEl.style.display = mode === "color" ? "block" : "none";
+    if (colorLabel) colorLabel.style.display = mode === "color" ? "block" : "none";
+    if (fileEl) {
+      // Show file input and clear button only for image mode
+      const show = mode === "image";
+      fileEl.style.display = show ? "block" : "none";
+      if (fileLabel) fileLabel.style.display = show ? "block" : "none";
+      if (clearBtn) clearBtn.style.display = show ? "inline-block" : "none";
+    }
+  };
+  if (modeEl) modeEl.addEventListener("change", refreshVisibility);
+  if (clearBtn) clearBtn.addEventListener("click", async () => {
+    try {
+      if (hasBrowserStorage()) await browser.storage.local.remove(["background_image"]);
+      else if (typeof localStorage !== "undefined") localStorage.removeItem("background_image");
+    } catch (_) {}
+    if (fileEl) fileEl.value = "";
+  });
   const greetingElInit = document.getElementById("greeting");
   if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
   const profileInit = document.getElementById("profile");
@@ -567,4 +700,19 @@ async function updateSettings(e) {
 
   // Weather after entrance
   renderWeather();
+
+  // Background: load and apply
+  const bg = await getBackgroundSettings();
+  applyBackground(bg);
+  // Ensure proper field visibility after load
+  (function ensureBgUI() {
+    const modeEl = document.getElementById("input-background-mode");
+    if (modeEl) {
+      modeEl.value = bg.mode || "default";
+      const colorEl = document.getElementById("input-background-color");
+      if (colorEl && bg.color) colorEl.value = bg.color;
+    }
+    const ev = new Event("change");
+    if (modeEl) modeEl.dispatchEvent(ev);
+  })();
 })();

@@ -101,9 +101,18 @@ a {
   padding: 0;
 }
 
+h1 {
+  font-size: 7em;
+  text-align: center;
+}
+
 h2 {
   margin-bottom: 1rem;
   font-size: 2.5em;
+}
+
+h3 {
+  font-size: 2em;
 }
 
 body {
@@ -119,10 +128,21 @@ body {
     var(--bg4) 100%
   );
   background-size: 200% 200%;
-  animation: bg-pan 24s ease-in-out infinite alternate;
   align-items: initial;
   font-family: "Inter", sans-serif;
   font-size: 8px;
+}
+
+/* Animate gradient only in default mode */
+body[data-bg="default"] {
+  animation: bg-pan 24s ease-in-out infinite alternate;
+}
+
+/* Make uploaded background images pretty */
+body[data-bg="image"] {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 body,
@@ -170,12 +190,12 @@ dialog {
   border-radius: 1rem;
   padding: 1rem;
   width: 360px;
+  width: 100%;
+  height: 100%;
 }
 
-@media (width: 375px) {
+@media (max-width: 375px) {
   dialog {
-    width: 100%;
-    height: 100%;
     border-radius: 0;
   }
 }
@@ -206,17 +226,55 @@ dialog::backdrop {
   backdrop-filter: blur(2rem);
 }
 
+.dialog-content,
 dialog form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+}
+
+dialog form {
+  flex: 1;
+}
+
+dialog .form-content {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  height: 100%;
   gap: 1rem;
 }
 
-h1 {
-  font-size: 7em;
-  text-align: center;
+.dialog-content {
+  height: 100%;
 }
 
+.dialog-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  dialog form {
+    padding-bottom: 3rem;
+  }
+
+  h1 {
+    font-size: 4em;
+  }
+
+  h2 {
+    margin: 0;
+  }
+
+  dialog .form-content {
+    flex-direction: column;
+  }
+}
+
+select,
 input {
   width: 100%;
   border-radius: 15rem;
@@ -224,16 +282,16 @@ input {
   border: none;
   box-sizing: border-box;
   background-color: var(--color-black);
+  height: 41px;
 }
 
-select {
-  width: 100%;
-  border-radius: 15rem;
-  padding: 0.5rem 0.9rem;
-  border: none;
-  box-sizing: border-box;
-  background-color: var(--color-black);
+input[type="color"] {
+  height: 41px;
 }
+
+/* input[type="file"] {
+  visibility: hidden;
+} */
 
 .clock {
   text-transform: capitalize;
