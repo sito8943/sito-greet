@@ -1,5 +1,7 @@
 // --- Simple i18n support (EN/ES) ---
-const CURRENT_LANG = ((navigator.language || "").toLowerCase().startsWith("es")) ? "es" : "en";
+const CURRENT_LANG = (navigator.language || "").toLowerCase().startsWith("es")
+  ? "es"
+  : "en";
 
 const I18N = {
   en: {
@@ -24,7 +26,8 @@ const I18N = {
     madeBy: "Made by",
     profileLabel: "Profile",
     fetchingWeather: "Fetching weather…",
-    setLocationToSeeWeather: "Set your location in Settings to see the weather.",
+    setLocationToSeeWeather:
+      "Set your location in Settings to see the weather.",
     weatherOff: "Weather took the day off.",
     weatherUnavailable: "Weather unavailable. Maybe it's shy.",
     goodMorning: "Good morning",
@@ -37,6 +40,9 @@ const I18N = {
     backgroundColor: "Background color",
     backgroundImage: "Background image",
     clearImage: "Clear image",
+    invalidCoordsUsingCurrent:
+      "Invalid coordinates; using your current location.",
+    invalidCoords: "Invalid coordinates.",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -60,7 +66,8 @@ const I18N = {
     madeBy: "Hecho por",
     profileLabel: "Perfil",
     fetchingWeather: "Obteniendo clima…",
-    setLocationToSeeWeather: "Configura tu ubicación en Ajustes para ver el clima.",
+    setLocationToSeeWeather:
+      "Configura tu ubicación en Ajustes para ver el clima.",
     weatherOff: "El clima se tomó el día libre.",
     weatherUnavailable: "Clima no disponible. Quizás está tímido.",
     goodMorning: "Buenos días",
@@ -73,6 +80,9 @@ const I18N = {
     backgroundColor: "Color de fondo",
     backgroundImage: "Imagen de fondo",
     clearImage: "Borrar imagen",
+    invalidCoordsUsingCurrent:
+      "Coordenadas inválidas; usando tu ubicación actual.",
+    invalidCoords: "Coordenadas inválidas.",
   },
 };
 
@@ -144,7 +154,8 @@ async function getBackgroundSettings() {
   const modeEl = document.getElementById("input-background-mode");
   if (modeEl) modeEl.value = stored.background_mode || "default";
   const colorEl = document.getElementById("input-background-color");
-  if (colorEl && stored.background_color) colorEl.value = stored.background_color;
+  if (colorEl && stored.background_color)
+    colorEl.value = stored.background_color;
 
   return {
     mode: stored.background_mode || "default",
@@ -246,7 +257,8 @@ async function getProfileName() {
   }
 
   const profileInput = document.getElementById("input-profile");
-  if (profileInput) profileInput.value = stored.profile_name ?? "Default Profile";
+  if (profileInput)
+    profileInput.value = stored.profile_name ?? "Default Profile";
 
   return stored.profile_name || "Default Profile";
 }
@@ -297,18 +309,28 @@ async function getWeatherSettings() {
   const enabledEl = document.getElementById("input-weather-enabled");
   if (enabledEl) enabledEl.checked = Boolean(stored.weather_enabled);
   const latEl = document.getElementById("input-weather-lat");
-  if (latEl && typeof stored.weather_latitude === "number") latEl.value = String(stored.weather_latitude);
+  if (latEl && isFiniteNumber(stored.weather_latitude))
+    latEl.value = String(stored.weather_latitude);
   const lonEl = document.getElementById("input-weather-lon");
-  if (lonEl && typeof stored.weather_longitude === "number") lonEl.value = String(stored.weather_longitude);
+  if (lonEl && isFiniteNumber(stored.weather_longitude))
+    lonEl.value = String(stored.weather_longitude);
   const unitsEl = document.getElementById("input-weather-units");
-  if (unitsEl) unitsEl.value = stored.weather_units === "fahrenheit" ? "fahrenheit" : "celsius";
+  if (unitsEl)
+    unitsEl.value =
+      stored.weather_units === "fahrenheit" ? "fahrenheit" : "celsius";
   const apiEl = document.getElementById("input-weather-api");
   if (apiEl && stored.weather_api_base) apiEl.value = stored.weather_api_base;
 
   return {
     enabled: Boolean(stored.weather_enabled),
-    lat: typeof stored.weather_latitude === "number" ? stored.weather_latitude : undefined,
-    lon: typeof stored.weather_longitude === "number" ? stored.weather_longitude : undefined,
+    lat:
+      typeof stored.weather_latitude === "number"
+        ? stored.weather_latitude
+        : undefined,
+    lon:
+      typeof stored.weather_longitude === "number"
+        ? stored.weather_longitude
+        : undefined,
     units: stored.weather_units === "fahrenheit" ? "fahrenheit" : "celsius",
     apiBase: stored.weather_api_base || "",
   };
@@ -317,6 +339,22 @@ async function getWeatherSettings() {
 function toDisplayTemp(t, units) {
   const unitChar = units === "fahrenheit" ? "°F" : "°C";
   return `${Math.round(t)}${unitChar}`;
+}
+
+function isFiniteNumber(n) {
+  return typeof n === "number" && Number.isFinite(n);
+}
+
+function isValidLat(lat) {
+  return isFiniteNumber(lat) && lat >= -90 && lat <= 90;
+}
+
+function isValidLon(lon) {
+  return isFiniteNumber(lon) && lon >= -180 && lon <= 180;
+}
+
+function areValidLatLon(lat, lon) {
+  return isValidLat(lat) && isValidLon(lon);
 }
 
 /**
@@ -332,80 +370,126 @@ function weatherCodeToMessage(code, temp, wind, units) {
   const isEs = CURRENT_LANG === "es";
   switch (c) {
     case 0:
-      base = isEs ? "Cielo despejado ☀️. Día ideal para salir." : "Clear sky ☀️. Perfect day to go out.";
+      base = isEs
+        ? "Cielo despejado ☀️. Día ideal para salir."
+        : "Clear sky ☀️. Perfect day to go out.";
       break;
     case 1:
-      base = isEs ? "Mayormente despejado 🌤️. Unas pocas nubes aquí y allá." : "Mostly clear 🌤️. A few clouds around.";
+      base = isEs
+        ? "Mayormente despejado 🌤️. Unas pocas nubes aquí y allá."
+        : "Mostly clear 🌤️. A few clouds around.";
       break;
     case 2:
-      base = isEs ? "Parcialmente nublado ⛅. Tal vez salga el sol luego." : "Partly cloudy ⛅. Sun may pop out later.";
+      base = isEs
+        ? "Parcialmente nublado ⛅. Tal vez salga el sol luego."
+        : "Partly cloudy ⛅. Sun may pop out later.";
       break;
     case 3:
-      base = isEs ? "Cielo nublado ☁️. Día algo gris, pero tranquilo." : "Overcast ☁️. A bit gray, but calm.";
+      base = isEs
+        ? "Cielo nublado ☁️. Día algo gris, pero tranquilo."
+        : "Overcast ☁️. A bit gray, but calm.";
       break;
     case 45:
     case 48:
-      base = isEs ? "Niebla 🌫️. Maneja con precaución." : "Fog 🌫️. Drive carefully.";
+      base = isEs
+        ? "Niebla 🌫️. Maneja con precaución."
+        : "Fog 🌫️. Drive carefully.";
       break;
     case 51:
-      base = isEs ? "Llovizna ligera 🌦️. Lleva paraguas por si acaso ☂️." : "Light drizzle 🌦️. Bring an umbrella just in case ☂️.";
+      base = isEs
+        ? "Llovizna ligera 🌦️. Lleva paraguas por si acaso ☂️."
+        : "Light drizzle 🌦️. Bring an umbrella just in case ☂️.";
       break;
     case 53:
-      base = isEs ? "Llovizna moderada 🌧️. Mejor tener paraguas a mano ☔." : "Moderate drizzle 🌧️. Keep an umbrella handy ☔.";
+      base = isEs
+        ? "Llovizna moderada 🌧️. Mejor tener paraguas a mano ☔."
+        : "Moderate drizzle 🌧️. Keep an umbrella handy ☔.";
       break;
     case 55:
-      base = isEs ? "Llovizna intensa 🌧️. Ideal para quedarse en casa con café ☕." : "Heavy drizzle 🌧️. Cozy coffee weather ☕.";
+      base = isEs
+        ? "Llovizna intensa 🌧️. Ideal para quedarse en casa con café ☕."
+        : "Heavy drizzle 🌧️. Cozy coffee weather ☕.";
       break;
     case 56:
     case 57:
-      base = isEs ? "Llovizna helada ❄️. Cuidado con superficies resbaladizas." : "Freezing drizzle ❄️. Watch for slippery surfaces.";
+      base = isEs
+        ? "Llovizna helada ❄️. Cuidado con superficies resbaladizas."
+        : "Freezing drizzle ❄️. Watch for slippery surfaces.";
       break;
     case 61:
-      base = isEs ? "Lluvia ligera 🌦️. Un paraguas podría ser buena idea ☂️." : "Light rain 🌦️. An umbrella might help ☂️.";
+      base = isEs
+        ? "Lluvia ligera 🌦️. Un paraguas podría ser buena idea ☂️."
+        : "Light rain 🌦️. An umbrella might help ☂️.";
       break;
     case 63:
-      base = isEs ? "Lluvia moderada 🌧️. Evita mojarte sin abrigo." : "Moderate rain 🌧️. Stay dry out there.";
+      base = isEs
+        ? "Lluvia moderada 🌧️. Evita mojarte sin abrigo."
+        : "Moderate rain 🌧️. Stay dry out there.";
       break;
     case 65:
-      base = isEs ? "Lluvia intensa ⛈️. Mejor evitar salir sin necesidad." : "Heavy rain ⛈️. Best to avoid going out.";
+      base = isEs
+        ? "Lluvia intensa ⛈️. Mejor evitar salir sin necesidad."
+        : "Heavy rain ⛈️. Best to avoid going out.";
       break;
     case 66:
     case 67:
-      base = isEs ? "Lluvia helada ❄️. Abrígate y camina con cuidado." : "Freezing rain ❄️. Bundle up and walk carefully.";
+      base = isEs
+        ? "Lluvia helada ❄️. Abrígate y camina con cuidado."
+        : "Freezing rain ❄️. Bundle up and walk carefully.";
       break;
     case 71:
-      base = isEs ? "Nieve ligera 🌨️. Puede verse bonito afuera." : "Light snow 🌨️. Looks pretty outside.";
+      base = isEs
+        ? "Nieve ligera 🌨️. Puede verse bonito afuera."
+        : "Light snow 🌨️. Looks pretty outside.";
       break;
     case 73:
-      base = isEs ? "Nieve moderada ❄️. Abrígate bien." : "Moderate snow ❄️. Dress warm.";
+      base = isEs
+        ? "Nieve moderada ❄️. Abrígate bien."
+        : "Moderate snow ❄️. Dress warm.";
       break;
     case 75:
-      base = isEs ? "Nieve intensa 🌨️❄️. Mejor permanecer en interiores." : "Heavy snow 🌨️❄️. Better stay indoors.";
+      base = isEs
+        ? "Nieve intensa 🌨️❄️. Mejor permanecer en interiores."
+        : "Heavy snow 🌨️❄️. Better stay indoors.";
       break;
     case 77:
       base = isEs ? "Caen granitos de nieve 🌨️." : "Snow grains falling 🌨️.";
       break;
     case 80:
-      base = isEs ? "Chubascos débiles 🌦️. Tal vez llueva un poco." : "Light showers 🌦️. Might rain a bit.";
+      base = isEs
+        ? "Chubascos débiles 🌦️. Tal vez llueva un poco."
+        : "Light showers 🌦️. Might rain a bit.";
       break;
     case 81:
-      base = isEs ? "Chubascos moderados 🌧️. Lleva paraguas por si acaso ☂️." : "Moderate showers 🌧️. Umbrella could help ☂️.";
+      base = isEs
+        ? "Chubascos moderados 🌧️. Lleva paraguas por si acaso ☂️."
+        : "Moderate showers 🌧️. Umbrella could help ☂️.";
       break;
     case 82:
-      base = isEs ? "Chubascos fuertes ⛈️. Mejor tener paraguas o capucha." : "Heavy showers ⛈️. Umbrella or hood recommended.";
+      base = isEs
+        ? "Chubascos fuertes ⛈️. Mejor tener paraguas o capucha."
+        : "Heavy showers ⛈️. Umbrella or hood recommended.";
       break;
     case 85:
-      base = isEs ? "Chubascos de nieve 🌨️. Puede acumularse en el suelo." : "Snow showers 🌨️. Might accumulate on the ground.";
+      base = isEs
+        ? "Chubascos de nieve 🌨️. Puede acumularse en el suelo."
+        : "Snow showers 🌨️. Might accumulate on the ground.";
       break;
     case 86:
-      base = isEs ? "Chubascos de nieve intensos ❄️. Precaución al salir." : "Heavy snow showers ❄️. Use caution.";
+      base = isEs
+        ? "Chubascos de nieve intensos ❄️. Precaución al salir."
+        : "Heavy snow showers ❄️. Use caution.";
       break;
     case 95:
-      base = isEs ? "Tormenta eléctrica ⚡. Quédate bajo techo si puedes." : "Thunderstorm ⚡. Stay indoors if you can.";
+      base = isEs
+        ? "Tormenta eléctrica ⚡. Quédate bajo techo si puedes."
+        : "Thunderstorm ⚡. Stay indoors if you can.";
       break;
     case 96:
     case 99:
-      base = isEs ? "Tormenta con granizo ⛈️. Evita salir por seguridad." : "Hailstorm ⛈️. Best to stay inside.";
+      base = isEs
+        ? "Tormenta con granizo ⛈️. Evita salir por seguridad."
+        : "Hailstorm ⛈️. Best to stay inside.";
       break;
     default:
       base = isEs ? "Clima no identificado 🤔." : "Weather not identified 🤔.";
@@ -413,19 +497,29 @@ function weatherCodeToMessage(code, temp, wind, units) {
 
   // Extras according to temperature and wind
   const extras = [];
-  if (!Number.isNaN(w) && w >= 35) extras.push(isEs ? "Hace bastante viento 💨." : "Quite windy 💨.");
+  if (!Number.isNaN(w) && w >= 35)
+    extras.push(isEs ? "Hace bastante viento 💨." : "Quite windy 💨.");
   if (!Number.isNaN(t)) {
     const hot = units === "fahrenheit" ? t >= 86 : t >= 30;
     const cold = units === "fahrenheit" ? t <= 32 : t <= 0;
-    if (hot) extras.push(isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated.");
-    else if (cold) extras.push(isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm.");
+    if (hot)
+      extras.push(
+        isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated."
+      );
+    else if (cold)
+      extras.push(
+        isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm."
+      );
   }
 
   return [base, ...extras].join(" ");
 }
 
 async function fetchOpenMeteo({ lat, lon, units, apiBase }) {
-  const base = apiBase && apiBase.trim().length ? apiBase.trim() : "https://api.open-meteo.com/v1/forecast";
+  const base =
+    apiBase && apiBase.trim().length
+      ? apiBase.trim()
+      : "https://api.open-meteo.com/v1/forecast";
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lon),
@@ -440,6 +534,9 @@ async function fetchOpenMeteo({ lat, lon, units, apiBase }) {
 }
 
 async function getCoordsPreferGeolocation(storedLat, storedLon) {
+  if (typeof storedLat === "number" && typeof storedLon === "number") {
+    return { lat: storedLat, lon: storedLon };
+  }
   if (typeof navigator !== "undefined" && navigator.geolocation) {
     try {
       const pos = await new Promise((resolve, reject) => {
@@ -454,9 +551,6 @@ async function getCoordsPreferGeolocation(storedLat, storedLon) {
       }
     } catch (_) {}
   }
-  if (typeof storedLat === "number" && typeof storedLon === "number") {
-    return { lat: storedLat, lon: storedLon };
-  }
   return undefined;
 }
 
@@ -470,14 +564,34 @@ async function renderWeather() {
       return;
     }
 
-    const coords = await getCoordsPreferGeolocation(settings.lat, settings.lon);
+    const userProvided =
+      typeof settings.lat === "number" || typeof settings.lon === "number";
+    const userLatLonValid = areValidLatLon(settings.lat, settings.lon);
+
+    let usedGeoDueToInvalid = false;
+    let coords;
+    if (userLatLonValid) {
+      coords = { lat: settings.lat, lon: settings.lon };
+    } else {
+      // If invalid or missing, try geolocation
+      coords = await getCoordsPreferGeolocation(undefined, undefined);
+      usedGeoDueToInvalid = Boolean(userProvided && !userLatLonValid && coords);
+    }
     if (!coords) {
-      el.textContent = tr("setLocationToSeeWeather");
+      // Mention invalid if user provided something but it was invalid
+      el.textContent =
+        userProvided && !userLatLonValid
+          ? `${tr("invalidCoords")} ${tr("setLocationToSeeWeather")}`
+          : tr("setLocationToSeeWeather");
       return;
     }
-
     el.textContent = tr("fetchingWeather");
-    const data = await fetchOpenMeteo({ lat: coords.lat, lon: coords.lon, units: settings.units, apiBase: settings.apiBase });
+    const data = await fetchOpenMeteo({
+      lat: coords.lat,
+      lon: coords.lon,
+      units: settings.units,
+      apiBase: settings.apiBase,
+    });
     const cw = data && data.current_weather;
     if (!cw) {
       el.textContent = tr("weatherOff");
@@ -485,7 +599,12 @@ async function renderWeather() {
     }
 
     const tempTxt = toDisplayTemp(cw.temperature, settings.units);
-    const msg = weatherCodeToMessage(cw.weathercode, cw.temperature, cw.windspeed, settings.units);
+    const msg = weatherCodeToMessage(
+      cw.weathercode,
+      cw.temperature,
+      cw.windspeed,
+      settings.units
+    );
     const icon = (() => {
       const c = Number(cw.weathercode);
       if (c === 0) return "☀️";
@@ -497,7 +616,10 @@ async function renderWeather() {
       if ([95, 96, 99].includes(c)) return "⛈️";
       return "🌍";
     })();
-    el.textContent = `${icon} ${tempTxt} — ${msg}`;
+    const prefix = usedGeoDueToInvalid
+      ? `${tr("invalidCoordsUsingCurrent")} `
+      : "";
+    el.textContent = `${prefix}${icon} ${tempTxt} — ${msg}`;
   } catch (err) {
     const el = document.getElementById("weather");
     if (el) el.textContent = tr("weatherUnavailable");
@@ -518,7 +640,9 @@ async function updateSettings(e) {
   // If form method is dialog, let it close; but handle async reads first
   const usernameEl = document.getElementById("input-username");
   const profileEl = document.getElementById("input-profile");
-  const disableAnimationsEl = document.getElementById("input-disable-animations");
+  const disableAnimationsEl = document.getElementById(
+    "input-disable-animations"
+  );
   const weatherEnabledEl = document.getElementById("input-weather-enabled");
   const weatherLatEl = document.getElementById("input-weather-lat");
   const weatherLonEl = document.getElementById("input-weather-lon");
@@ -526,12 +650,24 @@ async function updateSettings(e) {
   const weatherApiEl = document.getElementById("input-weather-api");
   const username = (usernameEl && usernameEl.value) || "User";
   const profile_name = (profileEl && profileEl.value) || "Default Profile";
-  const disable_animations = Boolean(disableAnimationsEl && disableAnimationsEl.checked);
+  const disable_animations = Boolean(
+    disableAnimationsEl && disableAnimationsEl.checked
+  );
   const weather_enabled = Boolean(weatherEnabledEl && weatherEnabledEl.checked);
-  const weather_latitude = weatherLatEl && weatherLatEl.value !== "" ? Number(weatherLatEl.value) : undefined;
-  const weather_longitude = weatherLonEl && weatherLonEl.value !== "" ? Number(weatherLonEl.value) : undefined;
-  const weather_units = weatherUnitsEl && weatherUnitsEl.value === "fahrenheit" ? "fahrenheit" : "celsius";
-  const weather_api_base = (weatherApiEl && weatherApiEl.value && weatherApiEl.value.trim()) || "";
+  const weather_latitude =
+    weatherLatEl && weatherLatEl.value !== ""
+      ? Number(weatherLatEl.value)
+      : undefined;
+  const weather_longitude =
+    weatherLonEl && weatherLonEl.value !== ""
+      ? Number(weatherLonEl.value)
+      : undefined;
+  const weather_units =
+    weatherUnitsEl && weatherUnitsEl.value === "fahrenheit"
+      ? "fahrenheit"
+      : "celsius";
+  const weather_api_base =
+    (weatherApiEl && weatherApiEl.value && weatherApiEl.value.trim()) || "";
 
   // Background controls
   const bgModeEl = document.getElementById("input-background-mode");
@@ -545,7 +681,12 @@ async function updateSettings(e) {
   try {
     const current = await (hasBrowserStorage()
       ? browser.storage.local.get("background_image")
-      : Promise.resolve({ background_image: typeof localStorage !== "undefined" ? localStorage.getItem("background_image") : "" }));
+      : Promise.resolve({
+          background_image:
+            typeof localStorage !== "undefined"
+              ? localStorage.getItem("background_image")
+              : "",
+        }));
     background_image = (current && current.background_image) || "";
   } catch (_) {}
   if (bgImageEl && bgImageEl.files && bgImageEl.files[0]) {
@@ -562,13 +703,32 @@ async function updateSettings(e) {
   const greetingEl = document.getElementById("greeting");
   if (greetingEl) greetingEl.textContent = `${greeting}, ${username}!`;
   const profileTextEl = document.getElementById("profile");
-  if (profileTextEl) profileTextEl.textContent = `${tr("profileLabel")}: ${profile_name}`;
-
+  if (profileTextEl)
+    profileTextEl.textContent = `${tr("profileLabel")}: ${profile_name}`;
   if (hasBrowserStorage()) {
-    const toSet = { username, profile_name, disable_animations, weather_enabled, weather_units, weather_api_base, background_mode, background_color };
+    const toSet = {
+      username,
+      profile_name,
+      disable_animations,
+      weather_enabled,
+      weather_units,
+      weather_api_base,
+      background_mode,
+      background_color,
+    };
+
     if (background_mode === "image") toSet.background_image = background_image;
-    if (typeof weather_latitude === "number") toSet.weather_latitude = weather_latitude;
-    if (typeof weather_longitude === "number") toSet.weather_longitude = weather_longitude;
+    if (
+      typeof weather_latitude === "number" ||
+      typeof weather_latitude === "undefined"
+    )
+      toSet.weather_latitude = weather_latitude;
+    if (
+      typeof weather_longitude === "number" ||
+      typeof weather_longitude === "undefined"
+    )
+      toSet.weather_longitude = weather_longitude;
+
     await browser.storage.local.set(toSet);
   } else if (typeof localStorage !== "undefined") {
     try {
@@ -576,13 +736,16 @@ async function updateSettings(e) {
       localStorage.setItem("profile_name", profile_name);
       localStorage.setItem("disable_animations", String(disable_animations));
       localStorage.setItem("weather_enabled", String(weather_enabled));
-      if (typeof weather_latitude === "number") localStorage.setItem("weather_latitude", String(weather_latitude));
-      if (typeof weather_longitude === "number") localStorage.setItem("weather_longitude", String(weather_longitude));
+      if (typeof weather_latitude === "number")
+        localStorage.setItem("weather_latitude", String(weather_latitude));
+      if (typeof weather_longitude === "number")
+        localStorage.setItem("weather_longitude", String(weather_longitude));
       localStorage.setItem("weather_units", weather_units);
       localStorage.setItem("weather_api_base", weather_api_base);
       localStorage.setItem("background_mode", background_mode);
       localStorage.setItem("background_color", background_color);
-      if (background_mode === "image" && background_image) localStorage.setItem("background_image", background_image);
+      if (background_mode === "image" && background_image)
+        localStorage.setItem("background_image", background_image);
     } catch (_) {}
   }
 
@@ -597,7 +760,11 @@ async function updateSettings(e) {
   renderWeather();
 
   // Apply background after saving
-  applyBackground({ mode: background_mode, color: background_color, image: background_image });
+  applyBackground({
+    mode: background_mode,
+    color: background_color,
+    image: background_image,
+  });
 }
 
 {
@@ -642,7 +809,8 @@ async function updateSettings(e) {
   const refreshVisibility = () => {
     const mode = modeEl ? modeEl.value : "default";
     if (colorEl) colorEl.style.display = mode === "color" ? "block" : "none";
-    if (colorLabel) colorLabel.style.display = mode === "color" ? "block" : "none";
+    if (colorLabel)
+      colorLabel.style.display = mode === "color" ? "block" : "none";
     if (fileEl) {
       // Show file input and clear button only for image mode
       const show = mode === "image";
@@ -652,17 +820,21 @@ async function updateSettings(e) {
     }
   };
   if (modeEl) modeEl.addEventListener("change", refreshVisibility);
-  if (clearBtn) clearBtn.addEventListener("click", async () => {
-    try {
-      if (hasBrowserStorage()) await browser.storage.local.remove(["background_image"]);
-      else if (typeof localStorage !== "undefined") localStorage.removeItem("background_image");
-    } catch (_) {}
-    if (fileEl) fileEl.value = "";
-  });
+  if (clearBtn)
+    clearBtn.addEventListener("click", async () => {
+      try {
+        if (hasBrowserStorage())
+          await browser.storage.local.remove(["background_image"]);
+        else if (typeof localStorage !== "undefined")
+          localStorage.removeItem("background_image");
+      } catch (_) {}
+      if (fileEl) fileEl.value = "";
+    });
   const greetingElInit = document.getElementById("greeting");
   if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
   const profileInit = document.getElementById("profile");
-  if (profileInit) profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
+  if (profileInit)
+    profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
 
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");
