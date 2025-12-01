@@ -249,6 +249,19 @@ dialog .form-content {
   height: 100%;
 }
 
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.dialog-header {
+    font-size: 14px;
+    color: var(--color-white);
+}
+
 .dialog-section {
   display: flex;
   flex-direction: column;
