@@ -4,13 +4,29 @@ This project follows a simple, human‑readable changelog. Versions aim to be Se
 
 ## Unreleased
 
+_No notable changes yet._
+
+---
+
+## 1.0.8 — Version header and coord fixes
+
+### Added
+- Display current extension version in the Settings dialog header.
+
+### Fixed
+- Validation for invalid latitude/longitude values.
+- More reliable saving of settings.
+
+---
+
+## 1.0.7 — Responsive dialog and backgrounds
+
 ### Added
 - Background customization in Settings: choose Default gradient, Solid color, or upload an Image. Stored in browser storage and applied across sessions.
 
 ### Changed
+- Settings dialog layout is responsive across viewports.
 - Minor i18n text mappings to support new Background settings.
-
----
 
 ## 1.0.6 — Initial notes
 
