@@ -3,6 +3,51 @@ const CURRENT_LANG = (navigator.language || "").toLowerCase().startsWith("es")
   ? "es"
   : "en";
 
+// --- Constants ---
+const MAX_PINNED_TABS = 4;
+const HISTORY_MAX_RESULTS = 8;
+const HISTORY_DAYS_BACK = 7;
+
+// --- Feature Flags System ---
+const FEATURE_FLAGS = {
+  weather: {
+    default: true,
+    labelKey: "flagWeather",
+    descKey: "flagWeatherDesc",
+  },
+  background_customization: {
+    default: true,
+    labelKey: "flagBackgroundCustomization",
+    descKey: "flagBackgroundCustomizationDesc",
+  },
+  animations: {
+    default: true,
+    labelKey: "flagAnimations",
+    descKey: "flagAnimationsDesc",
+  },
+  clock: { default: true, labelKey: "flagClock", descKey: "flagClockDesc" },
+  profile_display: {
+    default: true,
+    labelKey: "flagProfileDisplay",
+    descKey: "flagProfileDisplayDesc",
+  },
+  debug_mode: {
+    default: false,
+    labelKey: "flagDebugMode",
+    descKey: "flagDebugModeDesc",
+  },
+  pinned_tabs: {
+    default: true,
+    labelKey: "flagPinnedTabs",
+    descKey: "flagPinnedTabsDesc",
+  },
+  recent_history: {
+    default: false,
+    labelKey: "flagRecentHistory",
+    descKey: "flagRecentHistoryDesc",
+  },
+};
+
 const I18N = {
   en: {
     titleNewTab: "New Tab",
@@ -40,9 +85,49 @@ const I18N = {
     backgroundColor: "Background color",
     backgroundImage: "Background image",
     clearImage: "Clear image",
+    overlayOpacity: "Image overlay",
     invalidCoordsUsingCurrent:
       "Invalid coordinates; using your current location.",
     invalidCoords: "Invalid coordinates.",
+    // Feature flags dev panel
+    devPanel: "Developer Panel",
+    devPanelHint: "Ctrl+Shift+D to toggle",
+    featureFlags: "Feature Flags",
+    flagWeather: "Weather",
+    flagWeatherDesc: "Weather widget on new tab",
+    flagBackgroundCustomization: "Background Customization",
+    flagBackgroundCustomizationDesc: "Background mode options in settings",
+    flagAnimations: "Animations",
+    flagAnimationsDesc: "Entrance and transition animations",
+    flagClock: "Clock",
+    flagClockDesc: "Date and time display",
+    flagProfileDisplay: "Profile Display",
+    flagProfileDisplayDesc: "Show profile name below greeting",
+    flagDebugMode: "Debug Mode",
+    flagDebugModeDesc: "Show debug info in console",
+    flagsReset: "Reset all flags",
+    flagsClose: "Close",
+    flagEnabled: "ON",
+    flagDisabled: "OFF",
+    // Pinned Tabs
+    flagPinnedTabs: "Pinned Tabs",
+    flagPinnedTabsDesc: "Quick-access bookmarks on new tab",
+    pinnedTabs: "Pinned Tabs",
+    addPinnedTab: "Add pinned tab",
+    pinnedTabUrl: "URL",
+    pinnedTabLabel: "Label",
+    pinnedTabUrlPlaceholder: "https://example.com",
+    pinnedTabLabelPlaceholder: "My Site",
+    pinnedTabAdd: "Add",
+    pinnedTabRemove: "Remove",
+    // Recent History
+    flagRecentHistory: "Recent History",
+    flagRecentHistoryDesc: `Show last ${HISTORY_MAX_RESULTS} visited sites`,
+    recentHistory: "Recent",
+    recentHistoryEmpty: "No recent history.",
+    recentHistoryPermission: "Grant history permission to see recent sites.",
+    recentHistoryGrantPermission: "Grant Permission",
+    calendar: "Calendar",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -80,11 +165,356 @@ const I18N = {
     backgroundColor: "Color de fondo",
     backgroundImage: "Imagen de fondo",
     clearImage: "Borrar imagen",
+    overlayOpacity: "Oscurecer imagen",
     invalidCoordsUsingCurrent:
       "Coordenadas inválidas; usando tu ubicación actual.",
     invalidCoords: "Coordenadas inválidas.",
+    // Feature flags dev panel
+    devPanel: "Panel de Desarrollador",
+    devPanelHint: "Ctrl+Shift+D para alternar",
+    featureFlags: "Feature Flags",
+    flagWeather: "Clima",
+    flagWeatherDesc: "Widget de clima en nueva pestaña",
+    flagBackgroundCustomization: "Personalización de Fondo",
+    flagBackgroundCustomizationDesc: "Opciones de fondo en ajustes",
+    flagAnimations: "Animaciones",
+    flagAnimationsDesc: "Animaciones de entrada y transición",
+    flagClock: "Reloj",
+    flagClockDesc: "Visualización de fecha y hora",
+    flagProfileDisplay: "Mostrar Perfil",
+    flagProfileDisplayDesc: "Mostrar nombre de perfil bajo el saludo",
+    flagDebugMode: "Modo Debug",
+    flagDebugModeDesc: "Mostrar info de debug en consola",
+    flagsReset: "Resetear flags",
+    flagsClose: "Cerrar",
+    flagEnabled: "ON",
+    flagDisabled: "OFF",
+    // Pinned Tabs
+    flagPinnedTabs: "Pestañas Fijadas",
+    flagPinnedTabsDesc: "Marcadores rápidos en nueva pestaña",
+    pinnedTabs: "Pestañas Fijadas",
+    addPinnedTab: "Agregar pestaña fijada",
+    pinnedTabUrl: "URL",
+    pinnedTabLabel: "Etiqueta",
+    pinnedTabUrlPlaceholder: "https://ejemplo.com",
+    pinnedTabLabelPlaceholder: "Mi Sitio",
+    pinnedTabAdd: "Agregar",
+    pinnedTabRemove: "Eliminar",
+    // Recent History
+    flagRecentHistory: "Historial Reciente",
+    flagRecentHistoryDesc: `Mostrar últimos ${HISTORY_MAX_RESULTS} sitios visitados`,
+    recentHistory: "Reciente",
+    recentHistoryEmpty: "Sin historial reciente.",
+    recentHistoryPermission:
+      "Otorga permiso de historial para ver sitios recientes.",
+    recentHistoryGrantPermission: "Otorgar Permiso",
+    calendar: "Calendario",
   },
 };
+
+// In-memory cache populated on load
+let _featureFlagsCache = null;
+
+async function loadFeatureFlags() {
+  const defaults = {};
+  for (const [key, cfg] of Object.entries(FEATURE_FLAGS)) {
+    defaults[key] = cfg.default;
+  }
+
+  let stored = {};
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    const result = await browser.storage.local.get(storageKey);
+    if (result[storageKey]) stored = result[storageKey];
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) stored = JSON.parse(raw);
+    } catch (_) {}
+  }
+
+  _featureFlagsCache = { ...defaults, ...stored };
+  return _featureFlagsCache;
+}
+
+function isFeatureEnabled(flagName) {
+  if (!_featureFlagsCache) {
+    // Fallback before async load completes
+    const cfg = FEATURE_FLAGS[flagName];
+    return cfg ? cfg.default : false;
+  }
+  return Boolean(_featureFlagsCache[flagName]);
+}
+
+async function setFeatureFlag(flagName, enabled) {
+  if (!FEATURE_FLAGS[flagName]) return;
+  if (!_featureFlagsCache) await loadFeatureFlags();
+  _featureFlagsCache[flagName] = Boolean(enabled);
+
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.set({
+      [storageKey]: { ..._featureFlagsCache },
+    });
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(_featureFlagsCache));
+    } catch (_) {}
+  }
+
+  if (isFeatureEnabled("debug_mode")) {
+    console.log(`[FeatureFlag] ${flagName} = ${enabled}`);
+  }
+}
+
+async function resetFeatureFlags() {
+  _featureFlagsCache = null;
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.remove(storageKey);
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (_) {}
+  }
+  await loadFeatureFlags();
+}
+
+// --- Pinned Tabs ---
+async function getPinnedTabs() {
+  const key = "pinned_tabs";
+  if (hasBrowserStorage()) {
+    const result = await browser.storage.local.get(key);
+    return Array.isArray(result[key]) ? result[key] : [];
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+  return [];
+}
+
+async function savePinnedTabs(tabs) {
+  const key = "pinned_tabs";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.set({ [key]: tabs });
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(key, JSON.stringify(tabs));
+    } catch (_) {}
+  }
+}
+
+async function addPinnedTab(url, label) {
+  if (!url || !label) return;
+  try {
+    new URL(url);
+  } catch (_) {
+    return;
+  }
+  const tabs = await getPinnedTabs();
+  if (tabs.length >= MAX_PINNED_TABS) return;
+  tabs.push({ url: url.trim(), label: label.trim() });
+  await savePinnedTabs(tabs);
+  renderPinnedTabs();
+  renderPinnedTabsSettings();
+}
+
+async function removePinnedTab(index) {
+  const tabs = await getPinnedTabs();
+  if (index < 0 || index >= tabs.length) return;
+  tabs.splice(index, 1);
+  await savePinnedTabs(tabs);
+  renderPinnedTabs();
+  renderPinnedTabsSettings();
+}
+
+async function renderPinnedTabs() {
+  const container = document.getElementById("pinned-tabs");
+  if (!container) return;
+  if (!isFeatureEnabled("pinned_tabs")) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "";
+  const tabs = await getPinnedTabs();
+  container.innerHTML = "";
+
+  const heading = document.createElement("p");
+  heading.className = "section-heading";
+  heading.textContent = tr("pinnedTabs");
+  container.appendChild(heading);
+
+  for (const tab of tabs) {
+    const a = document.createElement("a");
+    a.href = tab.url;
+    a.className = "pinned-tab-item";
+    a.title = tab.url;
+    a.rel = "noopener";
+
+    const avatar = document.createElement("span");
+    avatar.className = "pinned-tab-avatar";
+    avatar.textContent = (tab.label || "?")[0].toUpperCase();
+
+    const label = document.createElement("span");
+    label.className = "pinned-tab-label";
+    label.textContent = tab.label;
+
+    a.appendChild(avatar);
+    a.appendChild(label);
+    container.appendChild(a);
+  }
+
+  // Fill remaining slots with placeholders
+  const remaining = MAX_PINNED_TABS - tabs.length;
+  for (let i = 0; i < remaining; i++) {
+    const placeholder = document.createElement("button");
+    placeholder.type = "button";
+    placeholder.className = "pinned-tab-item pinned-tab-placeholder";
+    placeholder.addEventListener("click", () => openAddPinnedDialog());
+
+    const avatar = document.createElement("span");
+    avatar.className = "pinned-tab-avatar pinned-tab-avatar-placeholder";
+    avatar.textContent = "+";
+
+    placeholder.appendChild(avatar);
+    container.appendChild(placeholder);
+  }
+}
+
+function openAddPinnedDialog() {
+  const dialog = document.getElementById("dialog-add-pinned");
+  if (!dialog || typeof dialog.showModal !== "function") return;
+  const urlEl = document.getElementById("dialog-pinned-url");
+  const labelEl = document.getElementById("dialog-pinned-label");
+  if (urlEl) urlEl.value = "";
+  if (labelEl) labelEl.value = "";
+  dialog.showModal();
+}
+
+async function renderPinnedTabsSettings() {
+  const list = document.getElementById("pinned-tabs-list");
+  if (!list) return;
+  const tabs = await getPinnedTabs();
+  list.innerHTML = "";
+  for (let i = 0; i < tabs.length; i++) {
+    const row = document.createElement("div");
+    row.className = "pinned-tab-settings-row";
+
+    const info = document.createElement("span");
+    info.className = "pinned-tab-settings-info";
+    info.textContent = `${tabs[i].label} — ${tabs[i].url}`;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "pinned-tab-remove-btn";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.title = tr("pinnedTabRemove");
+    removeBtn.addEventListener("click", () => removePinnedTab(i));
+
+    row.appendChild(info);
+    row.appendChild(removeBtn);
+    list.appendChild(row);
+  }
+}
+
+// --- Recent History ---
+async function hasHistoryPermission() {
+  try {
+    if (typeof browser !== "undefined" && browser.permissions) {
+      return await browser.permissions.contains({ permissions: ["history"] });
+    }
+  } catch (_) {}
+  return false;
+}
+
+async function requestHistoryPermission() {
+  try {
+    if (typeof browser !== "undefined" && browser.permissions) {
+      return await browser.permissions.request({ permissions: ["history"] });
+    }
+  } catch (_) {}
+  return false;
+}
+
+async function renderRecentHistory() {
+  const container = document.getElementById("recent-history");
+  if (!container) return;
+  if (!isFeatureEnabled("recent_history")) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "";
+  container.innerHTML = "";
+
+  const hasPermission = await hasHistoryPermission();
+  if (!hasPermission) {
+    const msg = document.createElement("p");
+    msg.className = "recent-history-permission-msg";
+    msg.textContent = tr("recentHistoryPermission");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "outlined button recent-history-grant-btn";
+    btn.textContent = tr("recentHistoryGrantPermission");
+    btn.addEventListener("click", async () => {
+      const granted = await requestHistoryPermission();
+      if (granted) renderRecentHistory();
+    });
+    container.appendChild(msg);
+    container.appendChild(btn);
+    return;
+  }
+
+  try {
+    const results = await browser.history.search({
+      text: "",
+      maxResults: HISTORY_MAX_RESULTS,
+      startTime: Date.now() - HISTORY_DAYS_BACK * 24 * 60 * 60 * 1000,
+    });
+    const filtered = (results || []).filter(
+      (item) => item.url && item.url.startsWith("http"),
+    );
+    if (filtered.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "recent-history-empty";
+      empty.textContent = tr("recentHistoryEmpty");
+      container.appendChild(empty);
+      return;
+    }
+    const heading = document.createElement("p");
+    heading.className = "section-heading";
+    heading.textContent = tr("recentHistory");
+    container.appendChild(heading);
+    for (const item of filtered) {
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.className = "recent-history-item";
+      a.title = item.url;
+      a.rel = "noopener";
+
+      const label = document.createElement("span");
+      label.className = "recent-history-label";
+      label.textContent = item.title || new URL(item.url).hostname;
+
+      const host = document.createElement("span");
+      host.className = "recent-history-host";
+      try {
+        host.textContent = new URL(item.url).hostname;
+      } catch (_) {}
+
+      a.appendChild(label);
+      a.appendChild(host);
+      container.appendChild(a);
+    }
+  } catch (err) {
+    if (isFeatureEnabled("debug_mode")) {
+      console.log("[Debug] History error:", err);
+    }
+  }
+}
 
 function tr(key) {
   return (I18N[CURRENT_LANG] && I18N[CURRENT_LANG][key]) || I18N.en[key] || key;
@@ -120,6 +550,16 @@ function applyI18n() {
       ["i18n-option-bg-image", "image"],
       ["i18n-label-bg-color", "backgroundColor"],
       ["i18n-label-bg-image", "backgroundImage"],
+      ["i18n-label-overlay-opacity", "overlayOpacity"],
+      ["dev-panel-title", "devPanel"],
+      ["dev-panel-hint", "devPanelHint"],
+      ["dev-panel-flags-title", "featureFlags"],
+      ["dev-panel-reset", "flagsReset"],
+      ["i18n-pinned-tabs-title", "pinnedTabs"],
+      ["i18n-pinned-tab-add", "pinnedTabAdd"],
+      ["i18n-add-pinned-title", "addPinnedTab"],
+      ["dialog-pinned-save", "pinnedTabAdd"],
+      ["dialog-pinned-cancel", "cancel"],
     ];
     for (const [id, key] of mapText) {
       const el = document.getElementById(id);
@@ -139,15 +579,18 @@ async function getBackgroundSettings() {
       "background_mode",
       "background_color",
       "background_image",
+      "background_overlay_opacity",
     ]);
   } else if (typeof localStorage !== "undefined") {
     try {
       const mode = localStorage.getItem("background_mode");
       const color = localStorage.getItem("background_color");
       const image = localStorage.getItem("background_image");
+      const overlay = localStorage.getItem("background_overlay_opacity");
       if (mode) stored.background_mode = mode;
       if (color) stored.background_color = color;
       if (image) stored.background_image = image;
+      if (overlay !== null) stored.background_overlay_opacity = Number(overlay);
     } catch (_) {}
   }
 
@@ -156,30 +599,42 @@ async function getBackgroundSettings() {
   const colorEl = document.getElementById("input-background-color");
   if (colorEl && stored.background_color)
     colorEl.value = stored.background_color;
+  const overlayEl = document.getElementById("input-overlay-opacity");
+  const overlayVal =
+    typeof stored.background_overlay_opacity === "number"
+      ? stored.background_overlay_opacity
+      : 0;
+  if (overlayEl) overlayEl.value = String(overlayVal);
+  const overlayValueEl = document.getElementById("overlay-opacity-value");
+  if (overlayValueEl) overlayValueEl.textContent = `${overlayVal}%`;
 
   return {
     mode: stored.background_mode || "default",
     color: stored.background_color || "#1b1b1b",
     image: stored.background_image || "",
+    overlayOpacity: overlayVal,
   };
 }
 
-function applyBackground({ mode, color, image }) {
+function applyBackground({ mode, color, image, overlayOpacity }) {
   try {
     const body = document.body;
     if (!body) return;
     body.dataset.bg = mode || "default";
+    const overlay = document.getElementById("bg-overlay");
     if (mode === "color") {
       body.style.backgroundColor = color || "#1b1b1b";
       body.style.backgroundImage = "none";
+      if (overlay) overlay.style.opacity = "0";
     } else if (mode === "image" && image) {
       body.style.backgroundImage = `url(${image})`;
       body.style.backgroundColor = "#000000";
+      if (overlay) overlay.style.opacity = String((overlayOpacity || 0) / 100);
     } else {
       // Default gradient; rely on CSS
       body.style.backgroundImage = "";
-      // Keep fallback color consistent
       body.style.backgroundColor = "";
+      if (overlay) overlay.style.opacity = "0";
     }
   } catch (_) {}
 }
@@ -198,6 +653,85 @@ function getFormattedDateTime(date) {
   };
 
   return now.toLocaleString(navigator.language || "es-ES", options);
+}
+
+function renderCalendar(date = new Date()) {
+  const container = document.getElementById("calendar");
+  if (!container) return;
+
+  const locale = navigator.language || (CURRENT_LANG === "es" ? "es-ES" : "en-US");
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const startsMonday = true;
+  const offset = startsMonday
+    ? (firstDay.getDay() + 6) % 7
+    : firstDay.getDay();
+
+  container.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "calendar-card";
+
+  const heading = document.createElement("h3");
+  heading.className = "section-heading";
+  heading.textContent = tr("calendar");
+  card.appendChild(heading);
+
+  const monthLabel = document.createElement("p");
+  monthLabel.className = "calendar-month-label";
+  monthLabel.textContent = new Date(year, month, 1).toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  });
+  card.appendChild(monthLabel);
+
+  const weekdayRow = document.createElement("div");
+  weekdayRow.className = "calendar-weekdays";
+  for (let i = 0; i < 7; i++) {
+    const dayIndex = startsMonday ? i + 1 : i;
+    const weekday = document.createElement("span");
+    weekday.className = "calendar-weekday";
+    weekday.textContent = new Date(2024, 0, dayIndex).toLocaleDateString(
+      locale,
+      { weekday: "short" },
+    );
+    weekdayRow.appendChild(weekday);
+  }
+  card.appendChild(weekdayRow);
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+
+  const today = new Date();
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() === month;
+
+  for (let i = 0; i < 42; i++) {
+    const dayCell = document.createElement("span");
+    dayCell.className = "calendar-day";
+
+    if (i < offset) {
+      dayCell.textContent = String(daysInPrevMonth - offset + i + 1);
+      dayCell.classList.add("calendar-day-muted");
+    } else if (i >= offset + daysInMonth) {
+      dayCell.textContent = String(i - (offset + daysInMonth) + 1);
+      dayCell.classList.add("calendar-day-muted");
+    } else {
+      const dayNumber = i - offset + 1;
+      dayCell.textContent = String(dayNumber);
+      if (isCurrentMonth && dayNumber === today.getDate()) {
+        dayCell.classList.add("calendar-day-today");
+      }
+    }
+
+    grid.appendChild(dayCell);
+  }
+
+  card.appendChild(grid);
+  container.appendChild(card);
 }
 
 function getGreeting() {
@@ -504,11 +1038,11 @@ function weatherCodeToMessage(code, temp, wind, units) {
     const cold = units === "fahrenheit" ? t <= 32 : t <= 0;
     if (hot)
       extras.push(
-        isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated."
+        isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated.",
       );
     else if (cold)
       extras.push(
-        isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm."
+        isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm.",
       );
   }
 
@@ -557,6 +1091,10 @@ async function getCoordsPreferGeolocation(storedLat, storedLon) {
 async function renderWeather() {
   const el = document.getElementById("weather");
   if (!el) return;
+  if (!isFeatureEnabled("weather")) {
+    el.textContent = "";
+    return;
+  }
   try {
     const settings = await getWeatherSettings();
     if (!settings.enabled) {
@@ -603,7 +1141,7 @@ async function renderWeather() {
       cw.weathercode,
       cw.temperature,
       cw.windspeed,
-      settings.units
+      settings.units,
     );
     const icon = (() => {
       const c = Number(cw.weathercode);
@@ -628,7 +1166,10 @@ async function renderWeather() {
 
 function openDialog() {
   const dialog = document.getElementById("dialog-settings");
-  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+  if (dialog && typeof dialog.showModal === "function") {
+    renderPinnedTabsSettings();
+    dialog.showModal();
+  }
 }
 
 function closeDialog() {
@@ -641,7 +1182,7 @@ async function updateSettings(e) {
   const usernameEl = document.getElementById("input-username");
   const profileEl = document.getElementById("input-profile");
   const disableAnimationsEl = document.getElementById(
-    "input-disable-animations"
+    "input-disable-animations",
   );
   const weatherEnabledEl = document.getElementById("input-weather-enabled");
   const weatherLatEl = document.getElementById("input-weather-lat");
@@ -651,7 +1192,7 @@ async function updateSettings(e) {
   const username = (usernameEl && usernameEl.value) || "User";
   const profile_name = (profileEl && profileEl.value) || "Default Profile";
   const disable_animations = Boolean(
-    disableAnimationsEl && disableAnimationsEl.checked
+    disableAnimationsEl && disableAnimationsEl.checked,
   );
   const weather_enabled = Boolean(weatherEnabledEl && weatherEnabledEl.checked);
   const weather_latitude =
@@ -673,8 +1214,12 @@ async function updateSettings(e) {
   const bgModeEl = document.getElementById("input-background-mode");
   const bgColorEl = document.getElementById("input-background-color");
   const bgImageEl = document.getElementById("input-background-image");
+  const bgOverlayEl = document.getElementById("input-overlay-opacity");
   const background_mode = (bgModeEl && bgModeEl.value) || "default";
   const background_color = (bgColorEl && bgColorEl.value) || "#1b1b1b";
+  const background_overlay_opacity = bgOverlayEl
+    ? Number(bgOverlayEl.value)
+    : 0;
 
   // Read any newly selected image file; otherwise keep existing stored one
   let background_image = "";
@@ -715,6 +1260,7 @@ async function updateSettings(e) {
       weather_api_base,
       background_mode,
       background_color,
+      background_overlay_opacity,
     };
 
     if (background_mode === "image") toSet.background_image = background_image;
@@ -744,6 +1290,10 @@ async function updateSettings(e) {
       localStorage.setItem("weather_api_base", weather_api_base);
       localStorage.setItem("background_mode", background_mode);
       localStorage.setItem("background_color", background_color);
+      localStorage.setItem(
+        "background_overlay_opacity",
+        String(background_overlay_opacity),
+      );
       if (background_mode === "image" && background_image)
         localStorage.setItem("background_image", background_image);
     } catch (_) {}
@@ -764,6 +1314,7 @@ async function updateSettings(e) {
     mode: background_mode,
     color: background_color,
     image: background_image,
+    overlayOpacity: background_overlay_opacity,
   });
 }
 
@@ -772,14 +1323,205 @@ async function updateSettings(e) {
   if (clock) clock.textContent = getFormattedDateTime();
 }
 
+// --- Developer Panel ---
+function buildDevPanel() {
+  const panel = document.getElementById("dev-panel");
+  if (!panel) return;
+  const list = document.getElementById("dev-flags-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  for (const [flagName, cfg] of Object.entries(FEATURE_FLAGS)) {
+    const enabled = isFeatureEnabled(flagName);
+    const row = document.createElement("div");
+    row.className = "dev-flag-row";
+
+    const info = document.createElement("div");
+    info.className = "dev-flag-info";
+    const label = document.createElement("span");
+    label.className = "dev-flag-label";
+    label.textContent = tr(cfg.labelKey);
+    const desc = document.createElement("span");
+    desc.className = "dev-flag-desc";
+    desc.textContent = tr(cfg.descKey);
+    info.appendChild(label);
+    info.appendChild(desc);
+
+    const toggle = document.createElement("label");
+    toggle.className = "switch dev-flag-switch";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = enabled;
+    input.addEventListener("change", async () => {
+      if (flagName === "recent_history" && input.checked) {
+        const granted = await requestHistoryPermission();
+        if (!granted) {
+          input.checked = false;
+          return;
+        }
+      }
+      await setFeatureFlag(flagName, input.checked);
+      applyFeatureFlags();
+    });
+    const slider = document.createElement("span");
+    slider.className = "slider round";
+    toggle.appendChild(input);
+    toggle.appendChild(slider);
+
+    row.appendChild(info);
+    row.appendChild(toggle);
+    list.appendChild(row);
+  }
+}
+
+function toggleDevPanel() {
+  const panel = document.getElementById("dev-panel");
+  if (!panel) return;
+  const isOpen = panel.classList.contains("open");
+  if (isOpen) {
+    panel.classList.remove("open");
+  } else {
+    buildDevPanel();
+    panel.classList.add("open");
+  }
+}
+
+async function applyFeatureFlags() {
+  // Clock
+  const clockEl = document.getElementById("clock");
+  if (clockEl) clockEl.style.display = isFeatureEnabled("clock") ? "" : "none";
+
+  // Profile
+  const profileEl = document.getElementById("profile");
+  if (profileEl)
+    profileEl.style.display = isFeatureEnabled("profile_display") ? "" : "none";
+
+  // Weather
+  const weatherEl = document.getElementById("weather");
+  if (weatherEl) {
+    if (isFeatureEnabled("weather")) {
+      weatherEl.style.display = "";
+      renderWeather();
+    } else {
+      weatherEl.style.display = "none";
+    }
+  }
+
+  // Animations
+  const root = document.documentElement;
+  if (!isFeatureEnabled("animations")) {
+    root.setAttribute("data-animations", "off");
+  } else {
+    const disableAnimations = await getDisableAnimations();
+    const reducedMotion = prefersReducedMotion() || disableAnimations;
+    if (reducedMotion) root.setAttribute("data-animations", "off");
+    else root.removeAttribute("data-animations");
+  }
+
+  // Background customization — hide settings section controls
+  const bgSection = document.getElementById("bg-customization-section");
+  if (bgSection)
+    bgSection.style.display = isFeatureEnabled("background_customization")
+      ? ""
+      : "none";
+
+  // Weather settings section
+  const weatherSection = document.getElementById("weather-settings-section");
+  if (weatherSection)
+    weatherSection.style.display = isFeatureEnabled("weather") ? "" : "none";
+
+  // Pinned Tabs
+  const pinnedTabsEl = document.getElementById("pinned-tabs");
+  if (pinnedTabsEl) {
+    if (isFeatureEnabled("pinned_tabs")) {
+      pinnedTabsEl.style.display = "";
+      renderPinnedTabs();
+    } else {
+      pinnedTabsEl.style.display = "none";
+    }
+  }
+  const pinnedTabsSection = document.getElementById(
+    "pinned-tabs-settings-section",
+  );
+  if (pinnedTabsSection)
+    pinnedTabsSection.style.display = isFeatureEnabled("pinned_tabs")
+      ? ""
+      : "none";
+
+  // Recent History
+  const recentHistoryEl = document.getElementById("recent-history");
+  if (recentHistoryEl) {
+    if (isFeatureEnabled("recent_history")) {
+      recentHistoryEl.style.display = "";
+      renderRecentHistory();
+    } else {
+      recentHistoryEl.style.display = "none";
+    }
+  }
+
+  // Debug mode
+  if (isFeatureEnabled("debug_mode")) {
+    console.log("[Debug] Feature flags:", { ..._featureFlagsCache });
+    console.log("[Debug] Lang:", CURRENT_LANG);
+    console.log(
+      "[Debug] Storage:",
+      hasBrowserStorage() ? "browser.storage" : "localStorage",
+    );
+  }
+}
+
+// --- Expand/Collapse ---
+let _expandDirection = 0; // -1 => up (calendar), 0 => neutral, 1 => down (tabs/history)
+
+function syncExpandedState() {
+  const isExpandedDown = _expandDirection === 1;
+  const isExpandedUp = _expandDirection === -1;
+  const main = document.querySelector("main");
+  if (main) {
+    main.classList.toggle("expanded-down", isExpandedDown);
+    main.classList.toggle("expanded-up", isExpandedUp);
+  }
+
+  const headerProfile = document.getElementById("header-profile");
+  if (headerProfile) {
+    if (isExpandedDown) {
+      const profileEl = document.getElementById("profile");
+      headerProfile.textContent = profileEl ? profileEl.textContent : "";
+      headerProfile.classList.add("show");
+    } else {
+      headerProfile.classList.remove("show");
+    }
+  }
+}
+
+function goDown() {
+  if (_expandDirection === 1) return;
+  if (_expandDirection === -1) _expandDirection = 0;
+  else _expandDirection = 1;
+  syncExpandedState();
+}
+
+function goUp() {
+  if (_expandDirection === -1) return;
+  if (_expandDirection === 1) _expandDirection = 0;
+  else _expandDirection = -1;
+  syncExpandedState();
+}
+
 (async () => {
+  // Load feature flags before anything else
+  await loadFeatureFlags();
+
   // Apply i18n labels/placeholders ASAP
   applyI18n();
   const disableAnimations = await getDisableAnimations();
-  const reducedMotion = prefersReducedMotion() || disableAnimations;
+  const animationsEnabled = isFeatureEnabled("animations");
+  const reducedMotion =
+    !animationsEnabled || prefersReducedMotion() || disableAnimations;
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
+  renderCalendar();
 
   // Expose to CSS via root data attribute for animation control
   const root = document.documentElement;
@@ -788,13 +1530,31 @@ async function updateSettings(e) {
     else root.removeAttribute("data-animations");
   }
 
-  setInterval(() => {
-    const clock = document.getElementById("clock");
-    if (clock) clock.textContent = getFormattedDateTime();
-  }, 1000);
+  // Clock feature
+  if (isFeatureEnabled("clock")) {
+    setInterval(() => {
+      const clock = document.getElementById("clock");
+      if (clock) clock.textContent = getFormattedDateTime();
+    }, 1000);
+  } else {
+    const clockEl = document.getElementById("clock");
+    if (clockEl) clockEl.style.display = "none";
+  }
 
   const settingsBtn = document.getElementById("settings-button");
   if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
+  const expandUpBtn = document.getElementById("expand-up-btn");
+  if (expandUpBtn) {
+    expandUpBtn.addEventListener("click", () => {
+      goUp();
+    });
+  }
+  const expandBtn = document.getElementById("expand-btn");
+  if (expandBtn) {
+    expandBtn.addEventListener("click", () => {
+      goDown();
+    });
+  }
   const cancelBtn = document.getElementById("cancel");
   if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
   const form = document.getElementById("form-settings");
@@ -806,19 +1566,34 @@ async function updateSettings(e) {
   const fileEl = document.getElementById("input-background-image");
   const fileLabel = document.getElementById("i18n-label-bg-image");
   const clearBtn = document.getElementById("btn-clear-bg-image");
+  const overlayLabel = document.getElementById("i18n-label-overlay-opacity");
+  const overlayRow = document.querySelector(".overlay-slider-row");
+  const overlayInput = document.getElementById("input-overlay-opacity");
+  const overlayValueDisplay = document.getElementById("overlay-opacity-value");
   const refreshVisibility = () => {
     const mode = modeEl ? modeEl.value : "default";
     if (colorEl) colorEl.style.display = mode === "color" ? "block" : "none";
     if (colorLabel)
       colorLabel.style.display = mode === "color" ? "block" : "none";
+    const showImage = mode === "image";
     if (fileEl) {
-      // Show file input and clear button only for image mode
-      const show = mode === "image";
-      fileEl.style.display = show ? "block" : "none";
-      if (fileLabel) fileLabel.style.display = show ? "block" : "none";
-      if (clearBtn) clearBtn.style.display = show ? "inline-block" : "none";
+      fileEl.style.display = showImage ? "block" : "none";
+      if (fileLabel) fileLabel.style.display = showImage ? "block" : "none";
+      if (clearBtn)
+        clearBtn.style.display = showImage ? "inline-block" : "none";
     }
+    if (overlayLabel) overlayLabel.style.display = showImage ? "block" : "none";
+    if (overlayRow) overlayRow.style.display = showImage ? "flex" : "none";
   };
+  if (overlayInput) {
+    overlayInput.addEventListener("input", () => {
+      if (overlayValueDisplay)
+        overlayValueDisplay.textContent = `${overlayInput.value}%`;
+      const overlay = document.getElementById("bg-overlay");
+      if (overlay)
+        overlay.style.opacity = String(Number(overlayInput.value) / 100);
+    });
+  }
   if (modeEl) modeEl.addEventListener("change", refreshVisibility);
   if (clearBtn)
     clearBtn.addEventListener("click", async () => {
@@ -833,15 +1608,21 @@ async function updateSettings(e) {
   const greetingElInit = document.getElementById("greeting");
   if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
   const profileInit = document.getElementById("profile");
-  if (profileInit)
-    profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
+  if (profileInit) {
+    if (isFeatureEnabled("profile_display")) {
+      profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
+    } else {
+      profileInit.style.display = "none";
+    }
+  }
 
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");
   const profileEl = document.getElementById("profile");
   if (!reducedMotion) {
     if (greetingEl) greetingEl.classList.add("fancy-appear");
-    if (profileEl) profileEl.classList.add("fancy-appear");
+    if (profileEl && isFeatureEnabled("profile_display"))
+      profileEl.classList.add("fancy-appear");
   }
 
   // Wait until both animations finish, then fade in clock and footer
@@ -860,8 +1641,8 @@ async function updateSettings(e) {
             };
             el.addEventListener("animationend", done, { once: true });
             setTimeout(done, 800);
-          })
-      )
+          }),
+      ),
     );
   }
 
@@ -887,4 +1668,106 @@ async function updateSettings(e) {
     const ev = new Event("change");
     if (modeEl) modeEl.dispatchEvent(ev);
   })();
+
+  // Hide background customization section if flag is off
+  const bgSection = document.getElementById("bg-customization-section");
+  if (bgSection && !isFeatureEnabled("background_customization"))
+    bgSection.style.display = "none";
+
+  // Hide weather settings section if flag is off
+  const weatherSection = document.getElementById("weather-settings-section");
+  if (weatherSection && !isFeatureEnabled("weather"))
+    weatherSection.style.display = "none";
+
+  // Pinned tabs: settings list (applyFeatureFlags handles the main render)
+  if (isFeatureEnabled("pinned_tabs")) {
+    renderPinnedTabsSettings();
+  }
+  const pinnedTabsSection = document.getElementById(
+    "pinned-tabs-settings-section",
+  );
+  if (pinnedTabsSection && !isFeatureEnabled("pinned_tabs"))
+    pinnedTabsSection.style.display = "none";
+
+  const addPinnedBtn = document.getElementById("btn-add-pinned-tab");
+  if (addPinnedBtn) {
+    addPinnedBtn.addEventListener("click", async () => {
+      const urlEl = document.getElementById("input-pinned-url");
+      const labelEl = document.getElementById("input-pinned-label");
+      const url = urlEl ? urlEl.value.trim() : "";
+      const label = labelEl ? labelEl.value.trim() : "";
+      if (url && label) {
+        await addPinnedTab(url, label);
+        if (urlEl) urlEl.value = "";
+        if (labelEl) labelEl.value = "";
+      }
+    });
+  }
+
+  // Add pinned tab mini dialog buttons
+  const dialogPinnedSave = document.getElementById("dialog-pinned-save");
+  const dialogPinnedCancel = document.getElementById("dialog-pinned-cancel");
+  const dialogAddPinned = document.getElementById("dialog-add-pinned");
+  if (dialogPinnedSave) {
+    dialogPinnedSave.addEventListener("click", async () => {
+      const urlEl = document.getElementById("dialog-pinned-url");
+      const labelEl = document.getElementById("dialog-pinned-label");
+      const url = urlEl ? urlEl.value.trim() : "";
+      const label = labelEl ? labelEl.value.trim() : "";
+      if (url && label) {
+        await addPinnedTab(url, label);
+        if (dialogAddPinned) dialogAddPinned.close();
+      }
+    });
+  }
+  if (dialogPinnedCancel) {
+    dialogPinnedCancel.addEventListener("click", () => {
+      if (dialogAddPinned) dialogAddPinned.close();
+    });
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    // Ignore if a dialog is open or user is typing in an input
+    const active = document.activeElement;
+    const isTyping =
+      active &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT");
+    if (isTyping) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      goDown();
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      goUp();
+    }
+    if (e.ctrlKey && e.shiftKey && e.key === "D") {
+      e.preventDefault();
+      toggleDevPanel();
+    }
+  });
+
+  // Dev panel buttons
+  const devCloseBtn = document.getElementById("dev-panel-close");
+  if (devCloseBtn) devCloseBtn.addEventListener("click", toggleDevPanel);
+  const devResetBtn = document.getElementById("dev-panel-reset");
+  if (devResetBtn)
+    devResetBtn.addEventListener("click", async () => {
+      await resetFeatureFlags();
+      buildDevPanel();
+      applyFeatureFlags();
+    });
+
+  // Apply initial feature flag state
+  applyFeatureFlags();
+
+  if (isFeatureEnabled("debug_mode")) {
+    console.log("[Debug] Sito Greet initialized with feature flags:", {
+      ..._featureFlagsCache,
+    });
+  }
 })();

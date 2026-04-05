@@ -9,79 +9,32 @@
 </head>
 
 <body>
+    <div id="bg-overlay" class="bg-overlay"></div>
     <header>
         <p class="clock fade-target" id="clock"></p>
         <p id="weather" class="weather"></p>
+        <p id="header-profile" class="header-profile"></p>
     </header>
     <main>
-        <h1 id="greeting"></h1>
-        <p id="profile"></p>
+        <button id="expand-up-btn" class="icon-button expand-btn expand-up-btn" type="button">
+            <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                    d="M297.4 470.6C309.9 483.1 330.2 483.1 342.7 470.6L534.7 278.6C547.2 266.1 547.2 245.8 534.7 233.3C522.2 220.8 501.9 220.8 489.4 233.3L320 402.7L150.6 233.4C138.1 220.9 117.8 220.9 105.3 233.4C92.8 245.9 92.8 266.2 105.3 278.7L297.3 470.7z" />
+            </svg>
+        </button>
+        <section id="calendar" class="calendar-row"></section>
+        <h1 id="greeting" class="collapsible-hero"></h1>
+        <p id="profile" class="collapsible-hero"></p>
+        <button id="expand-btn" class="icon-button expand-btn" type="button">
+            <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
+                <path
+                    d="M297.4 470.6C309.9 483.1 330.2 483.1 342.7 470.6L534.7 278.6C547.2 266.1 547.2 245.8 534.7 233.3C522.2 220.8 501.9 220.8 489.4 233.3L320 402.7L150.6 233.4C138.1 220.9 117.8 220.9 105.3 233.4C92.8 245.9 92.8 266.2 105.3 278.7L297.3 470.7z" />
+            </svg>
+        </button>
+        <nav id="pinned-tabs" class="pinned-tabs-row"></nav>
+        <nav id="recent-history" class="recent-history-row"></nav>
     </main>
-    <dialog id="dialog-settings">
-        <div class="dialog-content">
-            <div class="dialog-header">
-                <h2 id="i18n-settings-title">Settings</h2>
-                <span>(v1.0.8)</span>
-            </div>
-            <form id="form-settings" method="dialog">
-                <div class="form-content">
-                    <div class="dialog-section">
-                        <h3 id="i18n-information-title">Customization</h3>
-                        <label for="input-disable-animations" class="switch">
-                            <input id="input-disable-animations" type="checkbox">
-                            <span class="slider round"></span>
-                            <span id="i18n-disable-animations">
-                                Disable animations
-                            </span>
-                        </label>
-                        <label for="username">
-                            <span id="i18n-who-are-you">Who are you?</span>
-                        </label>
-                        <input id="input-username" value="" placeholder="Type your username here">
-                        <label for="username">
-                            <span id="i18n-which-profile">Which profile is this?</span>
-                        </label>
-                        <input id="input-profile" value="" placeholder="Type profile name here">
-                        <label for="input-background-mode" id="i18n-label-bg-mode">Mode</label>
-                        <select id="input-background-mode">
-                            <option id="i18n-option-bg-default" value="default">Default gradient</option>
-                            <option id="i18n-option-bg-color" value="color">Solid color</option>
-                            <option id="i18n-option-bg-image" value="image">Image</option>
-                        </select>
-                        <label for="input-background-color" id="i18n-label-bg-color">Background color</label>
-                        <input id="input-background-color" type="color" value="#1b1b1b">
-                        <label for="input-background-image" id="i18n-label-bg-image">Background image</label>
-                        <input id="input-background-image" type="file" accept="image/*">
 
-                        <button id="btn-clear-bg-image" type="button" class="outlined button">Clear image</button>
-                    </div>
-                    <div class="dialog-section">
-                        <h3 id="i18n-weather-title">Weather</h3>
-                        <label for="input-weather-enabled" class="switch">
-                            <input id="input-weather-enabled" type="checkbox">
-                            <span class="slider round"></span>
-                            <span id="i18n-weather-enabled">Show weather on new tab</span>
-                        </label>
-                        <label for="input-weather-lat" id="i18n-label-lat">Latitude</label>
-                        <input id="input-weather-lat" type="number" step="any" placeholder="e.g. 40.4168">
-                        <label for="input-weather-lon" id="i18n-label-lon">Longitude</label>
-                        <input id="input-weather-lon" type="number" step="any" placeholder="e.g. -3.7038">
-                        <label for="input-weather-units" id="i18n-label-temp-units">Temperature units</label>
-                        <select id="input-weather-units">
-                            <option id="i18n-option-celsius" value="celsius">Celsius (°C)</option>
-                            <option id="i18n-option-fahrenheit" value="fahrenheit">Fahrenheit (°F)</option>
-                        </select>
-                        <label for="input-weather-api" id="i18n-label-api-base">Open-Meteo API base (optional)</label>
-                        <input id="input-weather-api" placeholder="https://api.open-meteo.com/v1/forecast">
-                    </div>
-                </div>
-                <div class="button-row right">
-                    <button id="i18n-save-button" class="submit button">Save</button>
-                    <button id="cancel" type="button" class="outlined button">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </dialog>
     <footer class="fade-target">
         <a class="icon-button" href="https://github.com/sito8943/sito-greet" target="_blank" rel="noreferrer">
             <svg fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640">
@@ -103,6 +56,116 @@
             </svg>
         </button>
     </footer>
+    <!-- Settings dialog -->
+    <dialog id="dialog-settings">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h2 id="i18n-settings-title">Settings</h2>
+                <span>(v1.0.9)</span>
+            </div>
+            <form id="form-settings" method="dialog">
+                <div class="form-content">
+                    <div class="dialog-section">
+                        <h3 id="i18n-information-title">Customization</h3>
+                        <label for="input-disable-animations" class="switch">
+                            <input id="input-disable-animations" type="checkbox">
+                            <span class="slider round"></span>
+                            <span id="i18n-disable-animations">
+                                Disable animations
+                            </span>
+                        </label>
+                        <label for="username">
+                            <span id="i18n-who-are-you">Who are you?</span>
+                        </label>
+                        <input id="input-username" value="" placeholder="Type your username here">
+                        <label for="username">
+                            <span id="i18n-which-profile">Which profile is this?</span>
+                        </label>
+                        <input id="input-profile" value="" placeholder="Type profile name here">
+                        <div id="bg-customization-section" class="bg-customization-section">
+                            <label for="input-background-mode" id="i18n-label-bg-mode">Mode</label>
+                            <select id="input-background-mode">
+                                <option id="i18n-option-bg-default" value="default">Default gradient</option>
+                                <option id="i18n-option-bg-color" value="color">Solid color</option>
+                                <option id="i18n-option-bg-image" value="image">Image</option>
+                            </select>
+                            <label for="input-background-color" id="i18n-label-bg-color">Background color</label>
+                            <input id="input-background-color" type="color" value="#1b1b1b">
+                            <label for="input-background-image" id="i18n-label-bg-image">Background image</label>
+                            <input id="input-background-image" type="file" accept="image/*">
+                            <button id="btn-clear-bg-image" type="button" class="outlined button">Clear image</button>
+                            <label for="input-overlay-opacity" id="i18n-label-overlay-opacity">Image overlay</label>
+                            <div class="overlay-slider-row">
+                                <input id="input-overlay-opacity" type="range" min="0" max="100" value="0" step="1">
+                                <span id="overlay-opacity-value" class="overlay-opacity-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dialog-section" id="weather-settings-section">
+                        <h3 id="i18n-weather-title">Weather</h3>
+                        <label for="input-weather-enabled" class="switch">
+                            <input id="input-weather-enabled" type="checkbox">
+                            <span class="slider round"></span>
+                            <span id="i18n-weather-enabled">Show weather on new tab</span>
+                        </label>
+                        <label for="input-weather-lat" id="i18n-label-lat">Latitude</label>
+                        <input id="input-weather-lat" type="number" step="any" placeholder="e.g. 40.4168">
+                        <label for="input-weather-lon" id="i18n-label-lon">Longitude</label>
+                        <input id="input-weather-lon" type="number" step="any" placeholder="e.g. -3.7038">
+                        <label for="input-weather-units" id="i18n-label-temp-units">Temperature units</label>
+                        <select id="input-weather-units">
+                            <option id="i18n-option-celsius" value="celsius">Celsius (°C)</option>
+                            <option id="i18n-option-fahrenheit" value="fahrenheit">Fahrenheit (°F)</option>
+                        </select>
+                        <label for="input-weather-api" id="i18n-label-api-base">Open-Meteo API base (optional)</label>
+                        <input id="input-weather-api" placeholder="https://api.open-meteo.com/v1/forecast">
+                    </div>
+                    <div class="dialog-section" id="pinned-tabs-settings-section">
+                        <h3 id="i18n-pinned-tabs-title">Pinned Tabs</h3>
+                        <div id="pinned-tabs-list" class="pinned-tabs-settings-list"></div>
+                        <div class="pinned-tab-add-row">
+                            <input id="input-pinned-url" type="url" placeholder="https://example.com">
+                            <input id="input-pinned-label" type="text" placeholder="My Site">
+                            <button id="btn-add-pinned-tab" type="button" class="outlined button"><span
+                                    id="i18n-pinned-tab-add">Add</span></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="button-row right">
+                    <button id="i18n-save-button" class="submit button">Save</button>
+                    <button id="cancel" type="button" class="outlined button">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </dialog>
+    <!-- Add Pinned Tab mini dialog -->
+    <dialog id="dialog-add-pinned" class="dialog-add-pinned">
+        <div class="dialog-add-pinned-content">
+            <h3 id="i18n-add-pinned-title">Add pinned tab</h3>
+            <input id="dialog-pinned-url" type="url" placeholder="https://example.com">
+            <input id="dialog-pinned-label" type="text" placeholder="My Site">
+            <div class="button-row right">
+                <button id="dialog-pinned-save" type="button" class="submit button">Add</button>
+                <button id="dialog-pinned-cancel" type="button" class="outlined button">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+    <!-- Developer Panel (Ctrl+Shift+D) -->
+    <aside id="dev-panel" class="dev-panel">
+        <div class="dev-panel-content">
+            <div class="dev-panel-header">
+                <h3 id="dev-panel-title">Developer Panel</h3>
+                <button id="dev-panel-close" type="button" class="icon-button dev-panel-close-btn">&times;</button>
+            </div>
+            <p class="dev-panel-hint" id="dev-panel-hint">Ctrl+Shift+D to toggle</p>
+            <h4 id="dev-panel-flags-title">Feature Flags</h4>
+            <div id="dev-flags-list" class="dev-flags-list"></div>
+            <div class="dev-panel-actions">
+                <button id="dev-panel-reset" type="button" class="outlined button dev-panel-btn">Reset all
+                    flags</button>
+            </div>
+        </div>
+    </aside>
     <script src="newtab.js"></script>
 </body>
 

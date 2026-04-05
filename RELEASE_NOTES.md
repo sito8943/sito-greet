@@ -8,6 +8,27 @@ _No notable changes yet._
 
 ---
 
+## 1.0.9 — Feature flags, productivity widgets, and directional layout
+
+### Added
+- Developer Feature Flags panel (`Ctrl+Shift+D`) with persistent toggles for weather, background customization, animations, clock, profile, debug mode, pinned tabs, and recent history.
+- Pinned Tabs module on New Tab with up to 4 quick links, placeholders, mini add dialog, and settings management.
+- Recent History module (up to 8 visited sites) with runtime permission request flow.
+- Monthly calendar card in the up-expanded view.
+- Background image overlay opacity slider.
+- Optional `history` permission in `manifest.json` to support recent-history rendering.
+
+### Changed
+- Main layout now supports directional expansion (up for calendar, down for tabs/history) with chevron controls and `ArrowUp`/`ArrowDown` keyboard shortcuts.
+- Settings dialog now includes dedicated sections/subtitles for background, weather, and pinned tabs.
+- When expanded down, profile text is mirrored in the header for better context.
+
+### Fixed
+- i18n copy/translation consistency for new UI sections and controls.
+- Feature flag and directional state handling refinements in `newtab.js` (stability and behavior cleanup).
+
+---
+
 ## 1.0.8 — Version header and coord fixes
 
 ### Added

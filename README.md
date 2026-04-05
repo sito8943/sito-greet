@@ -46,6 +46,40 @@ Note: Temporary add-ons are unloaded when Firefox restarts. For day‑to‑day d
 - Alternatively, on the New Tab page, click the settings button to open the in-page menu and change the username via the dialog.
   - Background: select Default, Solid color (with color picker), or Image (upload stored locally in extension storage).
 
+## Feature Flags (Developer Panel)
+
+The extension includes a built-in feature flag system that lets developers toggle features on and off at runtime without changing code.
+
+**Open the panel:** press `Ctrl+Shift+D` on the new tab page.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `weather` | ON | Weather widget and its settings section |
+| `background_customization` | ON | Background mode options in settings |
+| `animations` | ON | Entrance and transition animations |
+| `clock` | ON | Date and time display |
+| `profile_display` | ON | Profile name below the greeting |
+| `debug_mode` | OFF | Logs debug info to the browser console |
+
+Flags are persisted in `browser.storage.local` under the `feature_flags` key and survive restarts. Use the **Reset all flags** button in the panel to restore defaults.
+
+### Using flags in code
+
+```js
+// Check a flag (synchronous after initial load)
+if (isFeatureEnabled("weather")) {
+  renderWeather();
+}
+
+// Toggle a flag and persist it
+await setFeatureFlag("debug_mode", true);
+
+// Restore all flags to their defaults
+await resetFeatureFlags();
+```
+
+To add a new flag, add an entry to the `FEATURE_FLAGS` object in `newtab.js` and corresponding i18n keys in the `I18N` object.
+
 ## Development
 
 - Recommended: use `web-ext` for a fast dev loop (auto‑reload).
