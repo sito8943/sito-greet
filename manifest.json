@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sito Greet",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "license": "MPL-2.0",
   "description": "Shows a greeting with the given user's name and profile name on new tabs.",
   "browser_specific_settings": {
@@ -17,6 +17,7 @@
     "newtab": "newtab.html"
   },
   "permissions": ["storage"],
+  "optional_permissions": ["history"],
   "host_permissions": [
     "https://api.open-meteo.com/*"
   ],

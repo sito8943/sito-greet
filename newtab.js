@@ -63,6 +63,24 @@ const I18N = {
     flagsClose: "Close",
     flagEnabled: "ON",
     flagDisabled: "OFF",
+    // Pinned Tabs
+    flagPinnedTabs: "Pinned Tabs",
+    flagPinnedTabsDesc: "Quick-access bookmarks on new tab",
+    pinnedTabs: "Pinned Tabs",
+    addPinnedTab: "Add pinned tab",
+    pinnedTabUrl: "URL",
+    pinnedTabLabel: "Label",
+    pinnedTabUrlPlaceholder: "https://example.com",
+    pinnedTabLabelPlaceholder: "My Site",
+    pinnedTabAdd: "Add",
+    pinnedTabRemove: "Remove",
+    // Recent History
+    flagRecentHistory: "Recent History",
+    flagRecentHistoryDesc: "Show last 10 visited sites",
+    recentHistory: "Recent",
+    recentHistoryEmpty: "No recent history.",
+    recentHistoryPermission: "Grant history permission to see recent sites.",
+    recentHistoryGrantPermission: "Grant Permission",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -123,6 +141,24 @@ const I18N = {
     flagsClose: "Cerrar",
     flagEnabled: "ON",
     flagDisabled: "OFF",
+    // Pinned Tabs
+    flagPinnedTabs: "Pestañas Fijadas",
+    flagPinnedTabsDesc: "Marcadores rápidos en nueva pestaña",
+    pinnedTabs: "Pestañas Fijadas",
+    addPinnedTab: "Agregar pestaña fijada",
+    pinnedTabUrl: "URL",
+    pinnedTabLabel: "Etiqueta",
+    pinnedTabUrlPlaceholder: "https://ejemplo.com",
+    pinnedTabLabelPlaceholder: "Mi Sitio",
+    pinnedTabAdd: "Agregar",
+    pinnedTabRemove: "Eliminar",
+    // Recent History
+    flagRecentHistory: "Historial Reciente",
+    flagRecentHistoryDesc: "Mostrar últimos 10 sitios visitados",
+    recentHistory: "Reciente",
+    recentHistoryEmpty: "Sin historial reciente.",
+    recentHistoryPermission: "Otorga permiso de historial para ver sitios recientes.",
+    recentHistoryGrantPermission: "Otorgar Permiso",
   },
 };
 
@@ -134,6 +170,8 @@ const FEATURE_FLAGS = {
   clock: { default: true, labelKey: "flagClock", descKey: "flagClockDesc" },
   profile_display: { default: true, labelKey: "flagProfileDisplay", descKey: "flagProfileDisplayDesc" },
   debug_mode: { default: false, labelKey: "flagDebugMode", descKey: "flagDebugModeDesc" },
+  pinned_tabs: { default: true, labelKey: "flagPinnedTabs", descKey: "flagPinnedTabsDesc" },
+  recent_history: { default: false, labelKey: "flagRecentHistory", descKey: "flagRecentHistoryDesc" },
 };
 
 // In-memory cache populated on load
@@ -202,6 +240,197 @@ async function resetFeatureFlags() {
   await loadFeatureFlags();
 }
 
+// --- Pinned Tabs ---
+async function getPinnedTabs() {
+  const key = "pinned_tabs";
+  if (hasBrowserStorage()) {
+    const result = await browser.storage.local.get(key);
+    return Array.isArray(result[key]) ? result[key] : [];
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_) { return []; }
+  }
+  return [];
+}
+
+async function savePinnedTabs(tabs) {
+  const key = "pinned_tabs";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.set({ [key]: tabs });
+  } else if (typeof localStorage !== "undefined") {
+    try { localStorage.setItem(key, JSON.stringify(tabs)); } catch (_) {}
+  }
+}
+
+async function addPinnedTab(url, label) {
+  if (!url || !label) return;
+  try { new URL(url); } catch (_) { return; }
+  const tabs = await getPinnedTabs();
+  if (tabs.length >= 12) return;
+  tabs.push({ url: url.trim(), label: label.trim() });
+  await savePinnedTabs(tabs);
+  renderPinnedTabs();
+  renderPinnedTabsSettings();
+}
+
+async function removePinnedTab(index) {
+  const tabs = await getPinnedTabs();
+  if (index < 0 || index >= tabs.length) return;
+  tabs.splice(index, 1);
+  await savePinnedTabs(tabs);
+  renderPinnedTabs();
+  renderPinnedTabsSettings();
+}
+
+async function renderPinnedTabs() {
+  const container = document.getElementById("pinned-tabs");
+  if (!container) return;
+  if (!isFeatureEnabled("pinned_tabs")) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "";
+  const tabs = await getPinnedTabs();
+  container.innerHTML = "";
+  if (tabs.length === 0) return;
+  for (const tab of tabs) {
+    const a = document.createElement("a");
+    a.href = tab.url;
+    a.className = "pinned-tab-item";
+    a.title = tab.url;
+    a.rel = "noopener";
+
+    const avatar = document.createElement("span");
+    avatar.className = "pinned-tab-avatar";
+    avatar.textContent = (tab.label || "?")[0].toUpperCase();
+
+    const label = document.createElement("span");
+    label.className = "pinned-tab-label";
+    label.textContent = tab.label;
+
+    a.appendChild(avatar);
+    a.appendChild(label);
+    container.appendChild(a);
+  }
+}
+
+async function renderPinnedTabsSettings() {
+  const list = document.getElementById("pinned-tabs-list");
+  if (!list) return;
+  const tabs = await getPinnedTabs();
+  list.innerHTML = "";
+  for (let i = 0; i < tabs.length; i++) {
+    const row = document.createElement("div");
+    row.className = "pinned-tab-settings-row";
+
+    const info = document.createElement("span");
+    info.className = "pinned-tab-settings-info";
+    info.textContent = `${tabs[i].label} — ${tabs[i].url}`;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "pinned-tab-remove-btn";
+    removeBtn.textContent = "\u00d7";
+    removeBtn.title = tr("pinnedTabRemove");
+    removeBtn.addEventListener("click", () => removePinnedTab(i));
+
+    row.appendChild(info);
+    row.appendChild(removeBtn);
+    list.appendChild(row);
+  }
+}
+
+// --- Recent History ---
+async function hasHistoryPermission() {
+  try {
+    if (typeof browser !== "undefined" && browser.permissions) {
+      return await browser.permissions.contains({ permissions: ["history"] });
+    }
+  } catch (_) {}
+  return false;
+}
+
+async function requestHistoryPermission() {
+  try {
+    if (typeof browser !== "undefined" && browser.permissions) {
+      return await browser.permissions.request({ permissions: ["history"] });
+    }
+  } catch (_) {}
+  return false;
+}
+
+async function renderRecentHistory() {
+  const container = document.getElementById("recent-history");
+  if (!container) return;
+  if (!isFeatureEnabled("recent_history")) {
+    container.style.display = "none";
+    return;
+  }
+  container.style.display = "";
+  container.innerHTML = "";
+
+  const hasPermission = await hasHistoryPermission();
+  if (!hasPermission) {
+    const msg = document.createElement("p");
+    msg.className = "recent-history-permission-msg";
+    msg.textContent = tr("recentHistoryPermission");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "outlined button recent-history-grant-btn";
+    btn.textContent = tr("recentHistoryGrantPermission");
+    btn.addEventListener("click", async () => {
+      const granted = await requestHistoryPermission();
+      if (granted) renderRecentHistory();
+    });
+    container.appendChild(msg);
+    container.appendChild(btn);
+    return;
+  }
+
+  try {
+    const results = await browser.history.search({
+      text: "",
+      maxResults: 10,
+      startTime: Date.now() - 7 * 24 * 60 * 60 * 1000,
+    });
+    const filtered = (results || []).filter(
+      (item) => item.url && item.url.startsWith("http")
+    );
+    if (filtered.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "recent-history-empty";
+      empty.textContent = tr("recentHistoryEmpty");
+      container.appendChild(empty);
+      return;
+    }
+    for (const item of filtered) {
+      const a = document.createElement("a");
+      a.href = item.url;
+      a.className = "recent-history-item";
+      a.title = item.url;
+      a.rel = "noopener";
+
+      const label = document.createElement("span");
+      label.className = "recent-history-label";
+      label.textContent = item.title || new URL(item.url).hostname;
+
+      const host = document.createElement("span");
+      host.className = "recent-history-host";
+      try { host.textContent = new URL(item.url).hostname; } catch (_) {}
+
+      a.appendChild(label);
+      a.appendChild(host);
+      container.appendChild(a);
+    }
+  } catch (err) {
+    if (isFeatureEnabled("debug_mode")) {
+      console.log("[Debug] History error:", err);
+    }
+  }
+}
+
 function tr(key) {
   return (I18N[CURRENT_LANG] && I18N[CURRENT_LANG][key]) || I18N.en[key] || key;
 }
@@ -240,6 +469,8 @@ function applyI18n() {
       ["dev-panel-hint", "devPanelHint"],
       ["dev-panel-flags-title", "featureFlags"],
       ["dev-panel-reset", "flagsReset"],
+      ["i18n-pinned-tabs-title", "pinnedTabs"],
+      ["i18n-pinned-tab-add", "pinnedTabAdd"],
     ];
     for (const [id, key] of mapText) {
       const el = document.getElementById(id);
@@ -752,7 +983,10 @@ async function renderWeather() {
 
 function openDialog() {
   const dialog = document.getElementById("dialog-settings");
-  if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+  if (dialog && typeof dialog.showModal === "function") {
+    renderPinnedTabsSettings();
+    dialog.showModal();
+  }
 }
 
 function closeDialog() {
@@ -926,6 +1160,13 @@ function buildDevPanel() {
     input.type = "checkbox";
     input.checked = enabled;
     input.addEventListener("change", async () => {
+      if (flagName === "recent_history" && input.checked) {
+        const granted = await requestHistoryPermission();
+        if (!granted) {
+          input.checked = false;
+          return;
+        }
+      }
       await setFeatureFlag(flagName, input.checked);
       applyFeatureFlags();
     });
@@ -994,6 +1235,31 @@ async function applyFeatureFlags() {
   const weatherSection = document.getElementById("weather-settings-section");
   if (weatherSection)
     weatherSection.style.display = isFeatureEnabled("weather") ? "" : "none";
+
+  // Pinned Tabs
+  const pinnedTabsEl = document.getElementById("pinned-tabs");
+  if (pinnedTabsEl) {
+    if (isFeatureEnabled("pinned_tabs")) {
+      pinnedTabsEl.style.display = "";
+      renderPinnedTabs();
+    } else {
+      pinnedTabsEl.style.display = "none";
+    }
+  }
+  const pinnedTabsSection = document.getElementById("pinned-tabs-settings-section");
+  if (pinnedTabsSection)
+    pinnedTabsSection.style.display = isFeatureEnabled("pinned_tabs") ? "" : "none";
+
+  // Recent History
+  const recentHistoryEl = document.getElementById("recent-history");
+  if (recentHistoryEl) {
+    if (isFeatureEnabled("recent_history")) {
+      recentHistoryEl.style.display = "";
+      renderRecentHistory();
+    } else {
+      recentHistoryEl.style.display = "none";
+    }
+  }
 
   // Debug mode
   if (isFeatureEnabled("debug_mode")) {
@@ -1144,6 +1410,35 @@ async function applyFeatureFlags() {
   const weatherSection = document.getElementById("weather-settings-section");
   if (weatherSection && !isFeatureEnabled("weather"))
     weatherSection.style.display = "none";
+
+  // Pinned tabs: initial render and button wiring
+  if (isFeatureEnabled("pinned_tabs")) {
+    renderPinnedTabs();
+    renderPinnedTabsSettings();
+  }
+  const pinnedTabsSection = document.getElementById("pinned-tabs-settings-section");
+  if (pinnedTabsSection && !isFeatureEnabled("pinned_tabs"))
+    pinnedTabsSection.style.display = "none";
+
+  const addPinnedBtn = document.getElementById("btn-add-pinned-tab");
+  if (addPinnedBtn) {
+    addPinnedBtn.addEventListener("click", async () => {
+      const urlEl = document.getElementById("input-pinned-url");
+      const labelEl = document.getElementById("input-pinned-label");
+      const url = urlEl ? urlEl.value.trim() : "";
+      const label = labelEl ? labelEl.value.trim() : "";
+      if (url && label) {
+        await addPinnedTab(url, label);
+        if (urlEl) urlEl.value = "";
+        if (labelEl) labelEl.value = "";
+      }
+    });
+  }
+
+  // Recent history: initial render
+  if (isFeatureEnabled("recent_history")) {
+    renderRecentHistory();
+  }
 
   // Dev panel keyboard shortcut: Ctrl+Shift+D
   document.addEventListener("keydown", (e) => {

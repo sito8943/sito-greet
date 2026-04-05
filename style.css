@@ -285,6 +285,15 @@ dialog .form-content {
   dialog .form-content {
     flex-direction: column;
   }
+
+  .pinned-tabs-row,
+  .recent-history-row {
+    padding: 0.5rem 1rem;
+  }
+
+  .pinned-tab-add-row {
+    flex-direction: column;
+  }
 }
 
 select,
@@ -536,6 +545,160 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+/* --- Pinned Tabs --- */
+.pinned-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  max-width: 800px;
+}
+
+.pinned-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  padding: 0.8rem;
+  border-radius: 1rem;
+  min-width: 70px;
+  max-width: 90px;
+}
+
+.pinned-tab-item:hover {
+  background-color: var(--color-alter-black);
+}
+
+.pinned-tab-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
+  font-size: 1.8em;
+  font-weight: 800;
+}
+
+.pinned-tab-label {
+  font-size: 1.3em;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80px;
+  color: var(--color-body-white);
+}
+
+/* Pinned Tabs settings */
+.pinned-tabs-settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pinned-tab-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.8rem;
+  background-color: var(--color-black);
+  border-radius: 0.8rem;
+  gap: 0.5rem;
+}
+
+.pinned-tab-settings-info {
+  font-size: 1.3em;
+  color: var(--color-body-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.pinned-tab-remove-btn {
+  color: var(--color-primary);
+  font-size: 1.6em;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50%;
+}
+
+.pinned-tab-remove-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+.pinned-tab-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pinned-tab-add-row input {
+  flex: 1;
+}
+
+.pinned-tab-add-row button {
+  flex-shrink: 0;
+}
+
+/* --- Recent History --- */
+.recent-history-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  max-width: 800px;
+}
+
+.recent-history-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.8rem;
+  max-width: 200px;
+}
+
+.recent-history-item:hover {
+  background-color: var(--color-alter-black);
+}
+
+.recent-history-label {
+  font-size: 1em;
+  color: var(--color-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.recent-history-host {
+  font-size: 0.8em;
+  color: var(--color-body-white);
+  opacity: 0.6;
+}
+
+.recent-history-empty,
+.recent-history-permission-msg {
+  font-size: 1.4em;
+  opacity: 0.6;
+  text-align: center;
+}
+
+.recent-history-grant-btn {
+  font-size: 1.4em;
+  margin-top: 0.5rem;
 }
 
 /* --- Developer Panel --- */
