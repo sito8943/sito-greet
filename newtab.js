@@ -1392,8 +1392,7 @@ async function applyFeatureFlags() {
 // --- Expand/Collapse ---
 let _expanded = false;
 
-function toggleExpand() {
-  _expanded = !_expanded;
+function syncExpandedState() {
   const main = document.querySelector("main");
   if (main) main.classList.toggle("expanded", _expanded);
 
@@ -1407,6 +1406,18 @@ function toggleExpand() {
       headerProfile.classList.remove("show");
     }
   }
+}
+
+function goDown() {
+  if (_expanded) return;
+  _expanded = true;
+  syncExpandedState();
+}
+
+function goUp() {
+  if (!_expanded) return;
+  _expanded = false;
+  syncExpandedState();
 }
 
 (async () => {
@@ -1444,7 +1455,12 @@ function toggleExpand() {
   const settingsBtn = document.getElementById("settings-button");
   if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
   const expandBtn = document.getElementById("expand-btn");
-  if (expandBtn) expandBtn.addEventListener("click", toggleExpand);
+  if (expandBtn) {
+    expandBtn.addEventListener("click", () => {
+      if (_expanded) goUp();
+      else goDown();
+    });
+  }
   const cancelBtn = document.getElementById("cancel");
   if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
   const form = document.getElementById("form-settings");
@@ -1627,9 +1643,13 @@ function toggleExpand() {
         active.tagName === "SELECT");
     if (isTyping) return;
 
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      toggleExpand();
+      goDown();
+    }
+    if (e.key === "ArrowUp" && _expanded) {
+      e.preventDefault();
+      goUp();
     }
     if (e.ctrlKey && e.shiftKey && e.key === "D") {
       e.preventDefault();
