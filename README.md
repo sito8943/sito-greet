@@ -1,4 +1,4 @@
-<img width="2932" height="1488" alt="image" src="https://github.com/user-attachments/assets/63cc432b-e566-4941-8068-d9ccd66a3a75" />
+<img width="1913" height="879" alt="image" src="https://github.com/user-attachments/assets/e0049e88-0461-41fd-b13d-59d77c393a52" />
 
 # Greeting New Tab (Browser Extension)
 
@@ -108,3 +108,9 @@ Edits to `newtab.*` or `style.css` are picked up on reload. Values are stored wi
 
 - The clock uses `navigator.language` when available, defaulting to `es-ES` for formatting.
 - If you customize links or icons in the footer of `newtab.html`, update the `href` as needed.
+
+<img width="1007" height="450" alt="image" src="https://github.com/user-attachments/assets/519d01c0-5e84-482a-aee9-bf8dab15a6ac" />
+*Pinned and recent Tabs*
+
+<img width="1016" height="581" alt="Screenshot 2026-04-05 at 20 38 39" src="https://github.com/user-attachments/assets/dccb1998-3fe9-4226-9621-b2b8110f9ede" />
+*Calendar*
