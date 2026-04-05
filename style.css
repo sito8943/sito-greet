@@ -615,9 +615,8 @@ input:checked + .slider:before {
 
 /* --- Pinned Tabs --- */
 .pinned-tabs-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
   gap: 1rem;
   padding: 1rem 0;
   max-width: 800px;
@@ -654,12 +653,11 @@ input:checked + .slider:before {
 }
 
 .pinned-tab-label {
-  font-size: 1.3em;
+  font-size: 1em;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 80px;
   color: var(--color-body-white);
 }
 
@@ -718,10 +716,9 @@ input:checked + .slider:before {
 
 /* --- Recent History --- */
 .recent-history-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
   padding: 0.5rem 0;
   max-width: 800px;
 }
