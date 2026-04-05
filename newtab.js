@@ -301,11 +301,12 @@ async function renderPinnedTabs() {
   container.style.display = "";
   const tabs = await getPinnedTabs();
   container.innerHTML = "";
-  if (tabs.length === 0) return;
+
   const heading = document.createElement("p");
   heading.className = "section-heading";
   heading.textContent = tr("pinnedTabs");
   container.appendChild(heading);
+
   for (const tab of tabs) {
     const a = document.createElement("a");
     a.href = tab.url;
@@ -325,6 +326,32 @@ async function renderPinnedTabs() {
     a.appendChild(label);
     container.appendChild(a);
   }
+
+  // Fill remaining slots with placeholders
+  const remaining = MAX_PINNED_TABS - tabs.length;
+  for (let i = 0; i < remaining; i++) {
+    const placeholder = document.createElement("button");
+    placeholder.type = "button";
+    placeholder.className = "pinned-tab-item pinned-tab-placeholder";
+    placeholder.addEventListener("click", () => openAddPinnedDialog());
+
+    const avatar = document.createElement("span");
+    avatar.className = "pinned-tab-avatar pinned-tab-avatar-placeholder";
+    avatar.textContent = "+";
+
+    placeholder.appendChild(avatar);
+    container.appendChild(placeholder);
+  }
+}
+
+function openAddPinnedDialog() {
+  const dialog = document.getElementById("dialog-add-pinned");
+  if (!dialog || typeof dialog.showModal !== "function") return;
+  const urlEl = document.getElementById("dialog-pinned-url");
+  const labelEl = document.getElementById("dialog-pinned-label");
+  if (urlEl) urlEl.value = "";
+  if (labelEl) labelEl.value = "";
+  dialog.showModal();
 }
 
 async function renderPinnedTabsSettings() {
@@ -487,6 +514,9 @@ function applyI18n() {
       ["dev-panel-reset", "flagsReset"],
       ["i18n-pinned-tabs-title", "pinnedTabs"],
       ["i18n-pinned-tab-add", "pinnedTabAdd"],
+      ["i18n-add-pinned-title", "addPinnedTab"],
+      ["dialog-pinned-save", "pinnedTabAdd"],
+      ["dialog-pinned-cancel", "cancel"],
     ];
     for (const [id, key] of mapText) {
       const el = document.getElementById(id);
@@ -1502,8 +1532,39 @@ function toggleExpand() {
     });
   }
 
-  // Dev panel keyboard shortcut: Ctrl+Shift+D
+  // Add pinned tab mini dialog buttons
+  const dialogPinnedSave = document.getElementById("dialog-pinned-save");
+  const dialogPinnedCancel = document.getElementById("dialog-pinned-cancel");
+  const dialogAddPinned = document.getElementById("dialog-add-pinned");
+  if (dialogPinnedSave) {
+    dialogPinnedSave.addEventListener("click", async () => {
+      const urlEl = document.getElementById("dialog-pinned-url");
+      const labelEl = document.getElementById("dialog-pinned-label");
+      const url = urlEl ? urlEl.value.trim() : "";
+      const label = labelEl ? labelEl.value.trim() : "";
+      if (url && label) {
+        await addPinnedTab(url, label);
+        if (dialogAddPinned) dialogAddPinned.close();
+      }
+    });
+  }
+  if (dialogPinnedCancel) {
+    dialogPinnedCancel.addEventListener("click", () => {
+      if (dialogAddPinned) dialogAddPinned.close();
+    });
+  }
+
+  // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
+    // Ignore if a dialog is open or user is typing in an input
+    const active = document.activeElement;
+    const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+    if (isTyping) return;
+
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      toggleExpand();
+    }
     if (e.ctrlKey && e.shiftKey && e.key === "D") {
       e.preventDefault();
       toggleDevPanel();
