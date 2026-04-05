@@ -3,6 +3,51 @@ const CURRENT_LANG = (navigator.language || "").toLowerCase().startsWith("es")
   ? "es"
   : "en";
 
+// --- Constants ---
+const MAX_PINNED_TABS = 4;
+const HISTORY_MAX_RESULTS = 8;
+const HISTORY_DAYS_BACK = 7;
+
+// --- Feature Flags System ---
+const FEATURE_FLAGS = {
+  weather: {
+    default: true,
+    labelKey: "flagWeather",
+    descKey: "flagWeatherDesc",
+  },
+  background_customization: {
+    default: true,
+    labelKey: "flagBackgroundCustomization",
+    descKey: "flagBackgroundCustomizationDesc",
+  },
+  animations: {
+    default: true,
+    labelKey: "flagAnimations",
+    descKey: "flagAnimationsDesc",
+  },
+  clock: { default: true, labelKey: "flagClock", descKey: "flagClockDesc" },
+  profile_display: {
+    default: true,
+    labelKey: "flagProfileDisplay",
+    descKey: "flagProfileDisplayDesc",
+  },
+  debug_mode: {
+    default: false,
+    labelKey: "flagDebugMode",
+    descKey: "flagDebugModeDesc",
+  },
+  pinned_tabs: {
+    default: true,
+    labelKey: "flagPinnedTabs",
+    descKey: "flagPinnedTabsDesc",
+  },
+  recent_history: {
+    default: false,
+    labelKey: "flagRecentHistory",
+    descKey: "flagRecentHistoryDesc",
+  },
+};
+
 const I18N = {
   en: {
     titleNewTab: "New Tab",
@@ -159,26 +204,10 @@ const I18N = {
     flagRecentHistoryDesc: `Mostrar últimos ${HISTORY_MAX_RESULTS} sitios visitados`,
     recentHistory: "Reciente",
     recentHistoryEmpty: "Sin historial reciente.",
-    recentHistoryPermission: "Otorga permiso de historial para ver sitios recientes.",
+    recentHistoryPermission:
+      "Otorga permiso de historial para ver sitios recientes.",
     recentHistoryGrantPermission: "Otorgar Permiso",
   },
-};
-
-// --- Constants ---
-const MAX_PINNED_TABS = 4;
-const HISTORY_MAX_RESULTS = 8;
-const HISTORY_DAYS_BACK = 7;
-
-// --- Feature Flags System ---
-const FEATURE_FLAGS = {
-  weather: { default: true, labelKey: "flagWeather", descKey: "flagWeatherDesc" },
-  background_customization: { default: true, labelKey: "flagBackgroundCustomization", descKey: "flagBackgroundCustomizationDesc" },
-  animations: { default: true, labelKey: "flagAnimations", descKey: "flagAnimationsDesc" },
-  clock: { default: true, labelKey: "flagClock", descKey: "flagClockDesc" },
-  profile_display: { default: true, labelKey: "flagProfileDisplay", descKey: "flagProfileDisplayDesc" },
-  debug_mode: { default: false, labelKey: "flagDebugMode", descKey: "flagDebugModeDesc" },
-  pinned_tabs: { default: true, labelKey: "flagPinnedTabs", descKey: "flagPinnedTabsDesc" },
-  recent_history: { default: false, labelKey: "flagRecentHistory", descKey: "flagRecentHistoryDesc" },
 };
 
 // In-memory cache populated on load
@@ -222,7 +251,9 @@ async function setFeatureFlag(flagName, enabled) {
 
   const storageKey = "feature_flags";
   if (hasBrowserStorage()) {
-    await browser.storage.local.set({ [storageKey]: { ..._featureFlagsCache } });
+    await browser.storage.local.set({
+      [storageKey]: { ..._featureFlagsCache },
+    });
   } else if (typeof localStorage !== "undefined") {
     try {
       localStorage.setItem(storageKey, JSON.stringify(_featureFlagsCache));
@@ -257,7 +288,9 @@ async function getPinnedTabs() {
     try {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : [];
-    } catch (_) { return []; }
+    } catch (_) {
+      return [];
+    }
   }
   return [];
 }
@@ -267,13 +300,19 @@ async function savePinnedTabs(tabs) {
   if (hasBrowserStorage()) {
     await browser.storage.local.set({ [key]: tabs });
   } else if (typeof localStorage !== "undefined") {
-    try { localStorage.setItem(key, JSON.stringify(tabs)); } catch (_) {}
+    try {
+      localStorage.setItem(key, JSON.stringify(tabs));
+    } catch (_) {}
   }
 }
 
 async function addPinnedTab(url, label) {
   if (!url || !label) return;
-  try { new URL(url); } catch (_) { return; }
+  try {
+    new URL(url);
+  } catch (_) {
+    return;
+  }
   const tabs = await getPinnedTabs();
   if (tabs.length >= MAX_PINNED_TABS) return;
   tabs.push({ url: url.trim(), label: label.trim() });
@@ -434,7 +473,7 @@ async function renderRecentHistory() {
       startTime: Date.now() - HISTORY_DAYS_BACK * 24 * 60 * 60 * 1000,
     });
     const filtered = (results || []).filter(
-      (item) => item.url && item.url.startsWith("http")
+      (item) => item.url && item.url.startsWith("http"),
     );
     if (filtered.length === 0) {
       const empty = document.createElement("p");
@@ -460,7 +499,9 @@ async function renderRecentHistory() {
 
       const host = document.createElement("span");
       host.className = "recent-history-host";
-      try { host.textContent = new URL(item.url).hostname; } catch (_) {}
+      try {
+        host.textContent = new URL(item.url).hostname;
+      } catch (_) {}
 
       a.appendChild(label);
       a.appendChild(host);
@@ -557,8 +598,10 @@ async function getBackgroundSettings() {
   if (colorEl && stored.background_color)
     colorEl.value = stored.background_color;
   const overlayEl = document.getElementById("input-overlay-opacity");
-  const overlayVal = typeof stored.background_overlay_opacity === "number"
-    ? stored.background_overlay_opacity : 0;
+  const overlayVal =
+    typeof stored.background_overlay_opacity === "number"
+      ? stored.background_overlay_opacity
+      : 0;
   if (overlayEl) overlayEl.value = String(overlayVal);
   const overlayValueEl = document.getElementById("overlay-opacity-value");
   if (overlayValueEl) overlayValueEl.textContent = `${overlayVal}%`;
@@ -914,11 +957,11 @@ function weatherCodeToMessage(code, temp, wind, units) {
     const cold = units === "fahrenheit" ? t <= 32 : t <= 0;
     if (hot)
       extras.push(
-        isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated."
+        isEs ? "Hace calor 🥵, hidrátate bien." : "It's hot 🥵, stay hydrated.",
       );
     else if (cold)
       extras.push(
-        isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm."
+        isEs ? "Hace frío 🧣, abrígate bien." : "It's cold 🧣, dress warm.",
       );
   }
 
@@ -1017,7 +1060,7 @@ async function renderWeather() {
       cw.weathercode,
       cw.temperature,
       cw.windspeed,
-      settings.units
+      settings.units,
     );
     const icon = (() => {
       const c = Number(cw.weathercode);
@@ -1058,7 +1101,7 @@ async function updateSettings(e) {
   const usernameEl = document.getElementById("input-username");
   const profileEl = document.getElementById("input-profile");
   const disableAnimationsEl = document.getElementById(
-    "input-disable-animations"
+    "input-disable-animations",
   );
   const weatherEnabledEl = document.getElementById("input-weather-enabled");
   const weatherLatEl = document.getElementById("input-weather-lat");
@@ -1068,7 +1111,7 @@ async function updateSettings(e) {
   const username = (usernameEl && usernameEl.value) || "User";
   const profile_name = (profileEl && profileEl.value) || "Default Profile";
   const disable_animations = Boolean(
-    disableAnimationsEl && disableAnimationsEl.checked
+    disableAnimationsEl && disableAnimationsEl.checked,
   );
   const weather_enabled = Boolean(weatherEnabledEl && weatherEnabledEl.checked);
   const weather_latitude =
@@ -1093,7 +1136,9 @@ async function updateSettings(e) {
   const bgOverlayEl = document.getElementById("input-overlay-opacity");
   const background_mode = (bgModeEl && bgModeEl.value) || "default";
   const background_color = (bgColorEl && bgColorEl.value) || "#1b1b1b";
-  const background_overlay_opacity = bgOverlayEl ? Number(bgOverlayEl.value) : 0;
+  const background_overlay_opacity = bgOverlayEl
+    ? Number(bgOverlayEl.value)
+    : 0;
 
   // Read any newly selected image file; otherwise keep existing stored one
   let background_image = "";
@@ -1164,7 +1209,10 @@ async function updateSettings(e) {
       localStorage.setItem("weather_api_base", weather_api_base);
       localStorage.setItem("background_mode", background_mode);
       localStorage.setItem("background_color", background_color);
-      localStorage.setItem("background_overlay_opacity", String(background_overlay_opacity));
+      localStorage.setItem(
+        "background_overlay_opacity",
+        String(background_overlay_opacity),
+      );
       if (background_mode === "image" && background_image)
         localStorage.setItem("background_image", background_image);
     } catch (_) {}
@@ -1293,7 +1341,8 @@ async function applyFeatureFlags() {
   const bgSection = document.getElementById("bg-customization-section");
   if (bgSection)
     bgSection.style.display = isFeatureEnabled("background_customization")
-      ? "" : "none";
+      ? ""
+      : "none";
 
   // Weather settings section
   const weatherSection = document.getElementById("weather-settings-section");
@@ -1310,9 +1359,13 @@ async function applyFeatureFlags() {
       pinnedTabsEl.style.display = "none";
     }
   }
-  const pinnedTabsSection = document.getElementById("pinned-tabs-settings-section");
+  const pinnedTabsSection = document.getElementById(
+    "pinned-tabs-settings-section",
+  );
   if (pinnedTabsSection)
-    pinnedTabsSection.style.display = isFeatureEnabled("pinned_tabs") ? "" : "none";
+    pinnedTabsSection.style.display = isFeatureEnabled("pinned_tabs")
+      ? ""
+      : "none";
 
   // Recent History
   const recentHistoryEl = document.getElementById("recent-history");
@@ -1329,7 +1382,10 @@ async function applyFeatureFlags() {
   if (isFeatureEnabled("debug_mode")) {
     console.log("[Debug] Feature flags:", { ..._featureFlagsCache });
     console.log("[Debug] Lang:", CURRENT_LANG);
-    console.log("[Debug] Storage:", hasBrowserStorage() ? "browser.storage" : "localStorage");
+    console.log(
+      "[Debug] Storage:",
+      hasBrowserStorage() ? "browser.storage" : "localStorage",
+    );
   }
 }
 
@@ -1361,7 +1417,8 @@ function toggleExpand() {
   applyI18n();
   const disableAnimations = await getDisableAnimations();
   const animationsEnabled = isFeatureEnabled("animations");
-  const reducedMotion = !animationsEnabled || prefersReducedMotion() || disableAnimations;
+  const reducedMotion =
+    !animationsEnabled || prefersReducedMotion() || disableAnimations;
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
@@ -1412,16 +1469,19 @@ function toggleExpand() {
     if (fileEl) {
       fileEl.style.display = showImage ? "block" : "none";
       if (fileLabel) fileLabel.style.display = showImage ? "block" : "none";
-      if (clearBtn) clearBtn.style.display = showImage ? "inline-block" : "none";
+      if (clearBtn)
+        clearBtn.style.display = showImage ? "inline-block" : "none";
     }
     if (overlayLabel) overlayLabel.style.display = showImage ? "block" : "none";
     if (overlayRow) overlayRow.style.display = showImage ? "flex" : "none";
   };
   if (overlayInput) {
     overlayInput.addEventListener("input", () => {
-      if (overlayValueDisplay) overlayValueDisplay.textContent = `${overlayInput.value}%`;
+      if (overlayValueDisplay)
+        overlayValueDisplay.textContent = `${overlayInput.value}%`;
       const overlay = document.getElementById("bg-overlay");
-      if (overlay) overlay.style.opacity = String(Number(overlayInput.value) / 100);
+      if (overlay)
+        overlay.style.opacity = String(Number(overlayInput.value) / 100);
     });
   }
   if (modeEl) modeEl.addEventListener("change", refreshVisibility);
@@ -1471,8 +1531,8 @@ function toggleExpand() {
             };
             el.addEventListener("animationend", done, { once: true });
             setTimeout(done, 800);
-          })
-      )
+          }),
+      ),
     );
   }
 
@@ -1513,7 +1573,9 @@ function toggleExpand() {
   if (isFeatureEnabled("pinned_tabs")) {
     renderPinnedTabsSettings();
   }
-  const pinnedTabsSection = document.getElementById("pinned-tabs-settings-section");
+  const pinnedTabsSection = document.getElementById(
+    "pinned-tabs-settings-section",
+  );
   if (pinnedTabsSection && !isFeatureEnabled("pinned_tabs"))
     pinnedTabsSection.style.display = "none";
 
@@ -1558,7 +1620,11 @@ function toggleExpand() {
   document.addEventListener("keydown", (e) => {
     // Ignore if a dialog is open or user is typing in an input
     const active = document.activeElement;
-    const isTyping = active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.tagName === "SELECT");
+    const isTyping =
+      active &&
+      (active.tagName === "INPUT" ||
+        active.tagName === "TEXTAREA" ||
+        active.tagName === "SELECT");
     if (isTyping) return;
 
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1586,6 +1652,8 @@ function toggleExpand() {
   applyFeatureFlags();
 
   if (isFeatureEnabled("debug_mode")) {
-    console.log("[Debug] Sito Greet initialized with feature flags:", { ..._featureFlagsCache });
+    console.log("[Debug] Sito Greet initialized with feature flags:", {
+      ..._featureFlagsCache,
+    });
   }
 })();
