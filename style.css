@@ -630,23 +630,54 @@ input:checked + .slider:before {
   height: 100%;
 }
 
-main.expanded .expand-btn {
+main.expanded-down #expand-btn {
   transform: rotate(180deg);
+}
+
+.expand-up-btn {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  transform: rotate(180deg);
+  opacity: 1;
+  max-height: 36px;
+  overflow: hidden;
+  pointer-events: auto;
+  transition:
+    opacity 700ms ease,
+    max-height 700ms ease,
+    margin-bottom 700ms ease;
+}
+
+main.expanded-up .expand-up-btn,
+main.expanded-down .expand-up-btn {
+  transform: rotate(180deg);
+  opacity: 0;
+  max-height: 0;
+  margin-bottom: 0;
+  pointer-events: none;
 }
 
 /* Hero elements (greeting + profile) collapse on expand */
 .collapsible-hero {
   transition:
-    transform 500ms ease-in-out,
+    transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 500ms ease-in-out,
-    max-height 500ms ease-in-out;
+    max-height 650ms cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top center;
   max-height: 200px;
   overflow: hidden;
 }
 
-main.expanded .collapsible-hero {
+main.expanded-down .collapsible-hero {
   transform: translateY(-20px) scale(0.7);
+  opacity: 0;
+  max-height: 0;
+  pointer-events: none;
+}
+
+/* In upward mode, hero fades/collapses out to give calendar full space */
+main.expanded-up .collapsible-hero {
+  transform: translateY(20px) scale(0.92);
   opacity: 0;
   max-height: 0;
   pointer-events: none;
@@ -664,11 +695,92 @@ main.expanded .collapsible-hero {
     max-height 500ms ease-in-out;
 }
 
-main.expanded .pinned-tabs-row,
-main.expanded .recent-history-row {
+main.expanded-down .pinned-tabs-row,
+main.expanded-down .recent-history-row {
   opacity: 1;
   max-height: 800px;
   pointer-events: auto;
+}
+
+/* Calendar visible only on upward expansion */
+.calendar-row {
+  width: min(800px, 95vw);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateY(-24px);
+  transition:
+    opacity 550ms ease-in-out,
+    max-height 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+main.expanded-up .calendar-row {
+  opacity: 1;
+  max-height: 800px;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+main.expanded-up .pinned-tabs-row,
+main.expanded-up .recent-history-row {
+  display: none;
+}
+
+.calendar-card {
+  border-radius: 1rem;
+  border: 1px solid #ffffff26;
+  background: #11111180;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.calendar-month-label {
+  text-align: center;
+  font-size: 1.5em;
+  margin: 0.8rem 0;
+  text-transform: capitalize;
+  color: var(--color-white);
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.calendar-weekday,
+.calendar-day {
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 1.2em;
+  padding: 0.45rem 0;
+}
+
+.calendar-weekday {
+  opacity: 0.65;
+  color: var(--color-body-white);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calendar-day {
+  height: 25px;
+  background-color: #ffffff12;
+  color: var(--color-body-white);
+}
+
+.calendar-day-muted {
+  opacity: 0.35;
+  background-color: #ffffff08;
+}
+
+.calendar-day-today {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 700;
 }
 
 /* Mini profile in header (visible only when expanded) */

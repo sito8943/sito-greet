@@ -127,6 +127,7 @@ const I18N = {
     recentHistoryEmpty: "No recent history.",
     recentHistoryPermission: "Grant history permission to see recent sites.",
     recentHistoryGrantPermission: "Grant Permission",
+    calendar: "Calendar",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -207,6 +208,7 @@ const I18N = {
     recentHistoryPermission:
       "Otorga permiso de historial para ver sitios recientes.",
     recentHistoryGrantPermission: "Otorgar Permiso",
+    calendar: "Calendario",
   },
 };
 
@@ -651,6 +653,85 @@ function getFormattedDateTime(date) {
   };
 
   return now.toLocaleString(navigator.language || "es-ES", options);
+}
+
+function renderCalendar(date = new Date()) {
+  const container = document.getElementById("calendar");
+  if (!container) return;
+
+  const locale = navigator.language || (CURRENT_LANG === "es" ? "es-ES" : "en-US");
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const startsMonday = true;
+  const offset = startsMonday
+    ? (firstDay.getDay() + 6) % 7
+    : firstDay.getDay();
+
+  container.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "calendar-card";
+
+  const heading = document.createElement("h3");
+  heading.className = "section-heading";
+  heading.textContent = tr("calendar");
+  card.appendChild(heading);
+
+  const monthLabel = document.createElement("p");
+  monthLabel.className = "calendar-month-label";
+  monthLabel.textContent = new Date(year, month, 1).toLocaleDateString(locale, {
+    month: "long",
+    year: "numeric",
+  });
+  card.appendChild(monthLabel);
+
+  const weekdayRow = document.createElement("div");
+  weekdayRow.className = "calendar-weekdays";
+  for (let i = 0; i < 7; i++) {
+    const dayIndex = startsMonday ? i + 1 : i;
+    const weekday = document.createElement("span");
+    weekday.className = "calendar-weekday";
+    weekday.textContent = new Date(2024, 0, dayIndex).toLocaleDateString(
+      locale,
+      { weekday: "short" },
+    );
+    weekdayRow.appendChild(weekday);
+  }
+  card.appendChild(weekdayRow);
+
+  const grid = document.createElement("div");
+  grid.className = "calendar-grid";
+
+  const today = new Date();
+  const isCurrentMonth =
+    today.getFullYear() === year && today.getMonth() === month;
+
+  for (let i = 0; i < 42; i++) {
+    const dayCell = document.createElement("span");
+    dayCell.className = "calendar-day";
+
+    if (i < offset) {
+      dayCell.textContent = String(daysInPrevMonth - offset + i + 1);
+      dayCell.classList.add("calendar-day-muted");
+    } else if (i >= offset + daysInMonth) {
+      dayCell.textContent = String(i - (offset + daysInMonth) + 1);
+      dayCell.classList.add("calendar-day-muted");
+    } else {
+      const dayNumber = i - offset + 1;
+      dayCell.textContent = String(dayNumber);
+      if (isCurrentMonth && dayNumber === today.getDate()) {
+        dayCell.classList.add("calendar-day-today");
+      }
+    }
+
+    grid.appendChild(dayCell);
+  }
+
+  card.appendChild(grid);
+  container.appendChild(card);
 }
 
 function getGreeting() {
@@ -1390,15 +1471,20 @@ async function applyFeatureFlags() {
 }
 
 // --- Expand/Collapse ---
-let _expanded = false;
+let _expandDirection = 0; // -1 => up (calendar), 0 => neutral, 1 => down (tabs/history)
 
 function syncExpandedState() {
+  const isExpandedDown = _expandDirection === 1;
+  const isExpandedUp = _expandDirection === -1;
   const main = document.querySelector("main");
-  if (main) main.classList.toggle("expanded", _expanded);
+  if (main) {
+    main.classList.toggle("expanded-down", isExpandedDown);
+    main.classList.toggle("expanded-up", isExpandedUp);
+  }
 
   const headerProfile = document.getElementById("header-profile");
   if (headerProfile) {
-    if (_expanded) {
+    if (isExpandedDown) {
       const profileEl = document.getElementById("profile");
       headerProfile.textContent = profileEl ? profileEl.textContent : "";
       headerProfile.classList.add("show");
@@ -1409,14 +1495,16 @@ function syncExpandedState() {
 }
 
 function goDown() {
-  if (_expanded) return;
-  _expanded = true;
+  if (_expandDirection === 1) return;
+  if (_expandDirection === -1) _expandDirection = 0;
+  else _expandDirection = 1;
   syncExpandedState();
 }
 
 function goUp() {
-  if (!_expanded) return;
-  _expanded = false;
+  if (_expandDirection === -1) return;
+  if (_expandDirection === 1) _expandDirection = 0;
+  else _expandDirection = -1;
   syncExpandedState();
 }
 
@@ -1433,6 +1521,7 @@ function goUp() {
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
+  renderCalendar();
 
   // Expose to CSS via root data attribute for animation control
   const root = document.documentElement;
@@ -1454,11 +1543,16 @@ function goUp() {
 
   const settingsBtn = document.getElementById("settings-button");
   if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
+  const expandUpBtn = document.getElementById("expand-up-btn");
+  if (expandUpBtn) {
+    expandUpBtn.addEventListener("click", () => {
+      goUp();
+    });
+  }
   const expandBtn = document.getElementById("expand-btn");
   if (expandBtn) {
     expandBtn.addEventListener("click", () => {
-      if (_expanded) goUp();
-      else goDown();
+      goDown();
     });
   }
   const cancelBtn = document.getElementById("cancel");
@@ -1647,7 +1741,7 @@ function goUp() {
       e.preventDefault();
       goDown();
     }
-    if (e.key === "ArrowUp" && _expanded) {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
       goUp();
     }
