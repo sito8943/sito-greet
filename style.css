@@ -537,3 +537,125 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+/* --- Developer Panel --- */
+.dev-panel {
+  position: fixed;
+  top: 0;
+  right: -380px;
+  width: 360px;
+  height: 100vh;
+  background-color: var(--color-black);
+  border-left: 1px solid var(--color-alter-black);
+  z-index: 9999;
+  overflow-y: auto;
+  transition: right 300ms ease-in-out;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
+}
+
+.dev-panel.open {
+  right: 0;
+}
+
+.dev-panel-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dev-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dev-panel-header h3 {
+  font-size: 2em;
+  margin: 0;
+}
+
+.dev-panel-close-btn {
+  font-size: 2.5rem;
+  color: var(--color-body-white);
+  cursor: pointer;
+  width: auto;
+  height: auto;
+}
+
+.dev-panel-close-btn:hover {
+  color: var(--color-primary);
+}
+
+.dev-panel-hint {
+  font-size: 1.4em;
+  opacity: 0.5;
+  margin: 0;
+}
+
+.dev-panel-content h4 {
+  font-family: "Poppins", sans-serif;
+  color: var(--color-primary);
+  font-size: 1.6em;
+  margin: 0.5rem 0 0 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dev-flags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dev-flag-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background-color: var(--color-alter-black);
+  border-radius: 0.8rem;
+  gap: 1rem;
+}
+
+.dev-flag-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.dev-flag-label {
+  font-family: "Roboto", sans-serif;
+  color: var(--color-white);
+  font-size: 1.6em;
+  font-weight: 600;
+}
+
+.dev-flag-desc {
+  font-family: "Roboto", sans-serif;
+  color: var(--color-body-white);
+  font-size: 1.3em;
+  opacity: 0.7;
+}
+
+.dev-flag-switch {
+  flex-shrink: 0;
+}
+
+.dev-panel-actions {
+  margin-top: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dev-panel-btn {
+  font-size: 1.4em;
+  flex: 1;
+}
+
+/* Disable dev panel transition when animations are off */
+:root[data-animations="off"] .dev-panel {
+  transition: none !important;
+}

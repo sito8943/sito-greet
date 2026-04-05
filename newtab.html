@@ -42,20 +42,21 @@
                             <span id="i18n-which-profile">Which profile is this?</span>
                         </label>
                         <input id="input-profile" value="" placeholder="Type profile name here">
-                        <label for="input-background-mode" id="i18n-label-bg-mode">Mode</label>
-                        <select id="input-background-mode">
-                            <option id="i18n-option-bg-default" value="default">Default gradient</option>
-                            <option id="i18n-option-bg-color" value="color">Solid color</option>
-                            <option id="i18n-option-bg-image" value="image">Image</option>
-                        </select>
-                        <label for="input-background-color" id="i18n-label-bg-color">Background color</label>
-                        <input id="input-background-color" type="color" value="#1b1b1b">
-                        <label for="input-background-image" id="i18n-label-bg-image">Background image</label>
-                        <input id="input-background-image" type="file" accept="image/*">
-
-                        <button id="btn-clear-bg-image" type="button" class="outlined button">Clear image</button>
+                        <div id="bg-customization-section">
+                            <label for="input-background-mode" id="i18n-label-bg-mode">Mode</label>
+                            <select id="input-background-mode">
+                                <option id="i18n-option-bg-default" value="default">Default gradient</option>
+                                <option id="i18n-option-bg-color" value="color">Solid color</option>
+                                <option id="i18n-option-bg-image" value="image">Image</option>
+                            </select>
+                            <label for="input-background-color" id="i18n-label-bg-color">Background color</label>
+                            <input id="input-background-color" type="color" value="#1b1b1b">
+                            <label for="input-background-image" id="i18n-label-bg-image">Background image</label>
+                            <input id="input-background-image" type="file" accept="image/*">
+                            <button id="btn-clear-bg-image" type="button" class="outlined button">Clear image</button>
+                        </div>
                     </div>
-                    <div class="dialog-section">
+                    <div class="dialog-section" id="weather-settings-section">
                         <h3 id="i18n-weather-title">Weather</h3>
                         <label for="input-weather-enabled" class="switch">
                             <input id="input-weather-enabled" type="checkbox">
@@ -103,6 +104,21 @@
             </svg>
         </button>
     </footer>
+    <!-- Developer Panel (Ctrl+Shift+D) -->
+    <aside id="dev-panel" class="dev-panel">
+        <div class="dev-panel-content">
+            <div class="dev-panel-header">
+                <h3 id="dev-panel-title">Developer Panel</h3>
+                <button id="dev-panel-close" type="button" class="icon-button dev-panel-close-btn">&times;</button>
+            </div>
+            <p class="dev-panel-hint" id="dev-panel-hint">Ctrl+Shift+D to toggle</p>
+            <h4 id="dev-panel-flags-title">Feature Flags</h4>
+            <div id="dev-flags-list" class="dev-flags-list"></div>
+            <div class="dev-panel-actions">
+                <button id="dev-panel-reset" type="button" class="outlined button dev-panel-btn">Reset all flags</button>
+            </div>
+        </div>
+    </aside>
     <script src="newtab.js"></script>
 </body>
 

@@ -43,6 +43,26 @@ const I18N = {
     invalidCoordsUsingCurrent:
       "Invalid coordinates; using your current location.",
     invalidCoords: "Invalid coordinates.",
+    // Feature flags dev panel
+    devPanel: "Developer Panel",
+    devPanelHint: "Ctrl+Shift+D to toggle",
+    featureFlags: "Feature Flags",
+    flagWeather: "Weather",
+    flagWeatherDesc: "Weather widget on new tab",
+    flagBackgroundCustomization: "Background Customization",
+    flagBackgroundCustomizationDesc: "Background mode options in settings",
+    flagAnimations: "Animations",
+    flagAnimationsDesc: "Entrance and transition animations",
+    flagClock: "Clock",
+    flagClockDesc: "Date and time display",
+    flagProfileDisplay: "Profile Display",
+    flagProfileDisplayDesc: "Show profile name below greeting",
+    flagDebugMode: "Debug Mode",
+    flagDebugModeDesc: "Show debug info in console",
+    flagsReset: "Reset all flags",
+    flagsClose: "Close",
+    flagEnabled: "ON",
+    flagDisabled: "OFF",
   },
   es: {
     titleNewTab: "Nueva pestaña",
@@ -83,8 +103,104 @@ const I18N = {
     invalidCoordsUsingCurrent:
       "Coordenadas inválidas; usando tu ubicación actual.",
     invalidCoords: "Coordenadas inválidas.",
+    // Feature flags dev panel
+    devPanel: "Panel de Desarrollador",
+    devPanelHint: "Ctrl+Shift+D para alternar",
+    featureFlags: "Feature Flags",
+    flagWeather: "Clima",
+    flagWeatherDesc: "Widget de clima en nueva pestaña",
+    flagBackgroundCustomization: "Personalización de Fondo",
+    flagBackgroundCustomizationDesc: "Opciones de fondo en ajustes",
+    flagAnimations: "Animaciones",
+    flagAnimationsDesc: "Animaciones de entrada y transición",
+    flagClock: "Reloj",
+    flagClockDesc: "Visualización de fecha y hora",
+    flagProfileDisplay: "Mostrar Perfil",
+    flagProfileDisplayDesc: "Mostrar nombre de perfil bajo el saludo",
+    flagDebugMode: "Modo Debug",
+    flagDebugModeDesc: "Mostrar info de debug en consola",
+    flagsReset: "Resetear flags",
+    flagsClose: "Cerrar",
+    flagEnabled: "ON",
+    flagDisabled: "OFF",
   },
 };
+
+// --- Feature Flags System ---
+const FEATURE_FLAGS = {
+  weather: { default: true, labelKey: "flagWeather", descKey: "flagWeatherDesc" },
+  background_customization: { default: true, labelKey: "flagBackgroundCustomization", descKey: "flagBackgroundCustomizationDesc" },
+  animations: { default: true, labelKey: "flagAnimations", descKey: "flagAnimationsDesc" },
+  clock: { default: true, labelKey: "flagClock", descKey: "flagClockDesc" },
+  profile_display: { default: true, labelKey: "flagProfileDisplay", descKey: "flagProfileDisplayDesc" },
+  debug_mode: { default: false, labelKey: "flagDebugMode", descKey: "flagDebugModeDesc" },
+};
+
+// In-memory cache populated on load
+let _featureFlagsCache = null;
+
+async function loadFeatureFlags() {
+  const defaults = {};
+  for (const [key, cfg] of Object.entries(FEATURE_FLAGS)) {
+    defaults[key] = cfg.default;
+  }
+
+  let stored = {};
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    const result = await browser.storage.local.get(storageKey);
+    if (result[storageKey]) stored = result[storageKey];
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) stored = JSON.parse(raw);
+    } catch (_) {}
+  }
+
+  _featureFlagsCache = { ...defaults, ...stored };
+  return _featureFlagsCache;
+}
+
+function isFeatureEnabled(flagName) {
+  if (!_featureFlagsCache) {
+    // Fallback before async load completes
+    const cfg = FEATURE_FLAGS[flagName];
+    return cfg ? cfg.default : false;
+  }
+  return Boolean(_featureFlagsCache[flagName]);
+}
+
+async function setFeatureFlag(flagName, enabled) {
+  if (!FEATURE_FLAGS[flagName]) return;
+  if (!_featureFlagsCache) await loadFeatureFlags();
+  _featureFlagsCache[flagName] = Boolean(enabled);
+
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.set({ [storageKey]: { ..._featureFlagsCache } });
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(_featureFlagsCache));
+    } catch (_) {}
+  }
+
+  if (isFeatureEnabled("debug_mode")) {
+    console.log(`[FeatureFlag] ${flagName} = ${enabled}`);
+  }
+}
+
+async function resetFeatureFlags() {
+  _featureFlagsCache = null;
+  const storageKey = "feature_flags";
+  if (hasBrowserStorage()) {
+    await browser.storage.local.remove(storageKey);
+  } else if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (_) {}
+  }
+  await loadFeatureFlags();
+}
 
 function tr(key) {
   return (I18N[CURRENT_LANG] && I18N[CURRENT_LANG][key]) || I18N.en[key] || key;
@@ -120,6 +236,10 @@ function applyI18n() {
       ["i18n-option-bg-image", "image"],
       ["i18n-label-bg-color", "backgroundColor"],
       ["i18n-label-bg-image", "backgroundImage"],
+      ["dev-panel-title", "devPanel"],
+      ["dev-panel-hint", "devPanelHint"],
+      ["dev-panel-flags-title", "featureFlags"],
+      ["dev-panel-reset", "flagsReset"],
     ];
     for (const [id, key] of mapText) {
       const el = document.getElementById(id);
@@ -557,6 +677,10 @@ async function getCoordsPreferGeolocation(storedLat, storedLon) {
 async function renderWeather() {
   const el = document.getElementById("weather");
   if (!el) return;
+  if (!isFeatureEnabled("weather")) {
+    el.textContent = "";
+    return;
+  }
   try {
     const settings = await getWeatherSettings();
     if (!settings.enabled) {
@@ -772,11 +896,122 @@ async function updateSettings(e) {
   if (clock) clock.textContent = getFormattedDateTime();
 }
 
+// --- Developer Panel ---
+function buildDevPanel() {
+  const panel = document.getElementById("dev-panel");
+  if (!panel) return;
+  const list = document.getElementById("dev-flags-list");
+  if (!list) return;
+  list.innerHTML = "";
+
+  for (const [flagName, cfg] of Object.entries(FEATURE_FLAGS)) {
+    const enabled = isFeatureEnabled(flagName);
+    const row = document.createElement("div");
+    row.className = "dev-flag-row";
+
+    const info = document.createElement("div");
+    info.className = "dev-flag-info";
+    const label = document.createElement("span");
+    label.className = "dev-flag-label";
+    label.textContent = tr(cfg.labelKey);
+    const desc = document.createElement("span");
+    desc.className = "dev-flag-desc";
+    desc.textContent = tr(cfg.descKey);
+    info.appendChild(label);
+    info.appendChild(desc);
+
+    const toggle = document.createElement("label");
+    toggle.className = "switch dev-flag-switch";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = enabled;
+    input.addEventListener("change", async () => {
+      await setFeatureFlag(flagName, input.checked);
+      applyFeatureFlags();
+    });
+    const slider = document.createElement("span");
+    slider.className = "slider round";
+    toggle.appendChild(input);
+    toggle.appendChild(slider);
+
+    row.appendChild(info);
+    row.appendChild(toggle);
+    list.appendChild(row);
+  }
+}
+
+function toggleDevPanel() {
+  const panel = document.getElementById("dev-panel");
+  if (!panel) return;
+  const isOpen = panel.classList.contains("open");
+  if (isOpen) {
+    panel.classList.remove("open");
+  } else {
+    buildDevPanel();
+    panel.classList.add("open");
+  }
+}
+
+async function applyFeatureFlags() {
+  // Clock
+  const clockEl = document.getElementById("clock");
+  if (clockEl) clockEl.style.display = isFeatureEnabled("clock") ? "" : "none";
+
+  // Profile
+  const profileEl = document.getElementById("profile");
+  if (profileEl)
+    profileEl.style.display = isFeatureEnabled("profile_display") ? "" : "none";
+
+  // Weather
+  const weatherEl = document.getElementById("weather");
+  if (weatherEl) {
+    if (isFeatureEnabled("weather")) {
+      weatherEl.style.display = "";
+      renderWeather();
+    } else {
+      weatherEl.style.display = "none";
+    }
+  }
+
+  // Animations
+  const root = document.documentElement;
+  if (!isFeatureEnabled("animations")) {
+    root.setAttribute("data-animations", "off");
+  } else {
+    const disableAnimations = await getDisableAnimations();
+    const reducedMotion = prefersReducedMotion() || disableAnimations;
+    if (reducedMotion) root.setAttribute("data-animations", "off");
+    else root.removeAttribute("data-animations");
+  }
+
+  // Background customization — hide settings section controls
+  const bgSection = document.getElementById("bg-customization-section");
+  if (bgSection)
+    bgSection.style.display = isFeatureEnabled("background_customization")
+      ? "" : "none";
+
+  // Weather settings section
+  const weatherSection = document.getElementById("weather-settings-section");
+  if (weatherSection)
+    weatherSection.style.display = isFeatureEnabled("weather") ? "" : "none";
+
+  // Debug mode
+  if (isFeatureEnabled("debug_mode")) {
+    console.log("[Debug] Feature flags:", { ..._featureFlagsCache });
+    console.log("[Debug] Lang:", CURRENT_LANG);
+    console.log("[Debug] Storage:", hasBrowserStorage() ? "browser.storage" : "localStorage");
+  }
+}
+
 (async () => {
+  // Load feature flags before anything else
+  await loadFeatureFlags();
+
   // Apply i18n labels/placeholders ASAP
   applyI18n();
   const disableAnimations = await getDisableAnimations();
-  const reducedMotion = prefersReducedMotion() || disableAnimations;
+  const animationsEnabled = isFeatureEnabled("animations");
+  const reducedMotion = !animationsEnabled || prefersReducedMotion() || disableAnimations;
   const greeting = getGreeting();
   const username = await getUserName();
   const profileName = await getProfileName();
@@ -788,10 +1023,16 @@ async function updateSettings(e) {
     else root.removeAttribute("data-animations");
   }
 
-  setInterval(() => {
-    const clock = document.getElementById("clock");
-    if (clock) clock.textContent = getFormattedDateTime();
-  }, 1000);
+  // Clock feature
+  if (isFeatureEnabled("clock")) {
+    setInterval(() => {
+      const clock = document.getElementById("clock");
+      if (clock) clock.textContent = getFormattedDateTime();
+    }, 1000);
+  } else {
+    const clockEl = document.getElementById("clock");
+    if (clockEl) clockEl.style.display = "none";
+  }
 
   const settingsBtn = document.getElementById("settings-button");
   if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
@@ -833,15 +1074,21 @@ async function updateSettings(e) {
   const greetingElInit = document.getElementById("greeting");
   if (greetingElInit) greetingElInit.textContent = `${greeting}, ${username}!`;
   const profileInit = document.getElementById("profile");
-  if (profileInit)
-    profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
+  if (profileInit) {
+    if (isFeatureEnabled("profile_display")) {
+      profileInit.textContent = `${tr("profileLabel")}: ${profileName}`;
+    } else {
+      profileInit.style.display = "none";
+    }
+  }
 
   // Trigger entrance animations for greeting and profile
   const greetingEl = document.getElementById("greeting");
   const profileEl = document.getElementById("profile");
   if (!reducedMotion) {
     if (greetingEl) greetingEl.classList.add("fancy-appear");
-    if (profileEl) profileEl.classList.add("fancy-appear");
+    if (profileEl && isFeatureEnabled("profile_display"))
+      profileEl.classList.add("fancy-appear");
   }
 
   // Wait until both animations finish, then fade in clock and footer
@@ -887,4 +1134,40 @@ async function updateSettings(e) {
     const ev = new Event("change");
     if (modeEl) modeEl.dispatchEvent(ev);
   })();
+
+  // Hide background customization section if flag is off
+  const bgSection = document.getElementById("bg-customization-section");
+  if (bgSection && !isFeatureEnabled("background_customization"))
+    bgSection.style.display = "none";
+
+  // Hide weather settings section if flag is off
+  const weatherSection = document.getElementById("weather-settings-section");
+  if (weatherSection && !isFeatureEnabled("weather"))
+    weatherSection.style.display = "none";
+
+  // Dev panel keyboard shortcut: Ctrl+Shift+D
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === "D") {
+      e.preventDefault();
+      toggleDevPanel();
+    }
+  });
+
+  // Dev panel buttons
+  const devCloseBtn = document.getElementById("dev-panel-close");
+  if (devCloseBtn) devCloseBtn.addEventListener("click", toggleDevPanel);
+  const devResetBtn = document.getElementById("dev-panel-reset");
+  if (devResetBtn)
+    devResetBtn.addEventListener("click", async () => {
+      await resetFeatureFlags();
+      buildDevPanel();
+      applyFeatureFlags();
+    });
+
+  // Apply initial feature flag state
+  applyFeatureFlags();
+
+  if (isFeatureEnabled("debug_mode")) {
+    console.log("[Debug] Sito Greet initialized with feature flags:", { ..._featureFlagsCache });
+  }
 })();
