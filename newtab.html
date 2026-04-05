@@ -9,6 +9,7 @@
 </head>
 
 <body>
+    <div id="bg-overlay" class="bg-overlay"></div>
     <header>
         <p class="clock fade-target" id="clock"></p>
         <p id="weather" class="weather"></p>
@@ -56,6 +57,11 @@
                             <label for="input-background-image" id="i18n-label-bg-image">Background image</label>
                             <input id="input-background-image" type="file" accept="image/*">
                             <button id="btn-clear-bg-image" type="button" class="outlined button">Clear image</button>
+                            <label for="input-overlay-opacity" id="i18n-label-overlay-opacity">Image overlay</label>
+                            <div class="overlay-slider-row">
+                                <input id="input-overlay-opacity" type="range" min="0" max="100" value="0" step="1">
+                                <span id="overlay-opacity-value" class="overlay-opacity-value">0%</span>
+                            </div>
                         </div>
                     </div>
                     <div class="dialog-section" id="weather-settings-section">

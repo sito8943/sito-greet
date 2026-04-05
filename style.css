@@ -149,6 +149,68 @@ body[data-bg="image"] {
   background-repeat: no-repeat;
 }
 
+/* Background image overlay */
+.bg-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure all content sits above the overlay */
+header,
+main,
+footer,
+dialog,
+.dev-panel {
+  position: relative;
+  z-index: 1;
+}
+
+/* Overlay opacity slider */
+.overlay-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.overlay-slider-row input[type="range"] {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: #9e9e9e;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+}
+
+.overlay-slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+}
+
+.overlay-slider-row input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  border: none;
+}
+
+.overlay-opacity-value {
+  font-size: 1.3em;
+  color: var(--color-body-white);
+  min-width: 3em;
+  text-align: right;
+}
+
 body,
 header,
 main {

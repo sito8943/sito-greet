@@ -40,6 +40,7 @@ const I18N = {
     backgroundColor: "Background color",
     backgroundImage: "Background image",
     clearImage: "Clear image",
+    overlayOpacity: "Image overlay",
     invalidCoordsUsingCurrent:
       "Invalid coordinates; using your current location.",
     invalidCoords: "Invalid coordinates.",
@@ -118,6 +119,7 @@ const I18N = {
     backgroundColor: "Color de fondo",
     backgroundImage: "Imagen de fondo",
     clearImage: "Borrar imagen",
+    overlayOpacity: "Oscurecer imagen",
     invalidCoordsUsingCurrent:
       "Coordenadas inválidas; usando tu ubicación actual.",
     invalidCoords: "Coordenadas inválidas.",
@@ -465,6 +467,7 @@ function applyI18n() {
       ["i18n-option-bg-image", "image"],
       ["i18n-label-bg-color", "backgroundColor"],
       ["i18n-label-bg-image", "backgroundImage"],
+      ["i18n-label-overlay-opacity", "overlayOpacity"],
       ["dev-panel-title", "devPanel"],
       ["dev-panel-hint", "devPanelHint"],
       ["dev-panel-flags-title", "featureFlags"],
@@ -490,15 +493,18 @@ async function getBackgroundSettings() {
       "background_mode",
       "background_color",
       "background_image",
+      "background_overlay_opacity",
     ]);
   } else if (typeof localStorage !== "undefined") {
     try {
       const mode = localStorage.getItem("background_mode");
       const color = localStorage.getItem("background_color");
       const image = localStorage.getItem("background_image");
+      const overlay = localStorage.getItem("background_overlay_opacity");
       if (mode) stored.background_mode = mode;
       if (color) stored.background_color = color;
       if (image) stored.background_image = image;
+      if (overlay !== null) stored.background_overlay_opacity = Number(overlay);
     } catch (_) {}
   }
 
@@ -507,30 +513,40 @@ async function getBackgroundSettings() {
   const colorEl = document.getElementById("input-background-color");
   if (colorEl && stored.background_color)
     colorEl.value = stored.background_color;
+  const overlayEl = document.getElementById("input-overlay-opacity");
+  const overlayVal = typeof stored.background_overlay_opacity === "number"
+    ? stored.background_overlay_opacity : 0;
+  if (overlayEl) overlayEl.value = String(overlayVal);
+  const overlayValueEl = document.getElementById("overlay-opacity-value");
+  if (overlayValueEl) overlayValueEl.textContent = `${overlayVal}%`;
 
   return {
     mode: stored.background_mode || "default",
     color: stored.background_color || "#1b1b1b",
     image: stored.background_image || "",
+    overlayOpacity: overlayVal,
   };
 }
 
-function applyBackground({ mode, color, image }) {
+function applyBackground({ mode, color, image, overlayOpacity }) {
   try {
     const body = document.body;
     if (!body) return;
     body.dataset.bg = mode || "default";
+    const overlay = document.getElementById("bg-overlay");
     if (mode === "color") {
       body.style.backgroundColor = color || "#1b1b1b";
       body.style.backgroundImage = "none";
+      if (overlay) overlay.style.opacity = "0";
     } else if (mode === "image" && image) {
       body.style.backgroundImage = `url(${image})`;
       body.style.backgroundColor = "#000000";
+      if (overlay) overlay.style.opacity = String((overlayOpacity || 0) / 100);
     } else {
       // Default gradient; rely on CSS
       body.style.backgroundImage = "";
-      // Keep fallback color consistent
       body.style.backgroundColor = "";
+      if (overlay) overlay.style.opacity = "0";
     }
   } catch (_) {}
 }
@@ -1031,8 +1047,10 @@ async function updateSettings(e) {
   const bgModeEl = document.getElementById("input-background-mode");
   const bgColorEl = document.getElementById("input-background-color");
   const bgImageEl = document.getElementById("input-background-image");
+  const bgOverlayEl = document.getElementById("input-overlay-opacity");
   const background_mode = (bgModeEl && bgModeEl.value) || "default";
   const background_color = (bgColorEl && bgColorEl.value) || "#1b1b1b";
+  const background_overlay_opacity = bgOverlayEl ? Number(bgOverlayEl.value) : 0;
 
   // Read any newly selected image file; otherwise keep existing stored one
   let background_image = "";
@@ -1073,6 +1091,7 @@ async function updateSettings(e) {
       weather_api_base,
       background_mode,
       background_color,
+      background_overlay_opacity,
     };
 
     if (background_mode === "image") toSet.background_image = background_image;
@@ -1102,6 +1121,7 @@ async function updateSettings(e) {
       localStorage.setItem("weather_api_base", weather_api_base);
       localStorage.setItem("background_mode", background_mode);
       localStorage.setItem("background_color", background_color);
+      localStorage.setItem("background_overlay_opacity", String(background_overlay_opacity));
       if (background_mode === "image" && background_image)
         localStorage.setItem("background_image", background_image);
     } catch (_) {}
@@ -1122,6 +1142,7 @@ async function updateSettings(e) {
     mode: background_mode,
     color: background_color,
     image: background_image,
+    overlayOpacity: background_overlay_opacity,
   });
 }
 
@@ -1313,19 +1334,31 @@ async function applyFeatureFlags() {
   const fileEl = document.getElementById("input-background-image");
   const fileLabel = document.getElementById("i18n-label-bg-image");
   const clearBtn = document.getElementById("btn-clear-bg-image");
+  const overlayLabel = document.getElementById("i18n-label-overlay-opacity");
+  const overlayRow = document.querySelector(".overlay-slider-row");
+  const overlayInput = document.getElementById("input-overlay-opacity");
+  const overlayValueDisplay = document.getElementById("overlay-opacity-value");
   const refreshVisibility = () => {
     const mode = modeEl ? modeEl.value : "default";
     if (colorEl) colorEl.style.display = mode === "color" ? "block" : "none";
     if (colorLabel)
       colorLabel.style.display = mode === "color" ? "block" : "none";
+    const showImage = mode === "image";
     if (fileEl) {
-      // Show file input and clear button only for image mode
-      const show = mode === "image";
-      fileEl.style.display = show ? "block" : "none";
-      if (fileLabel) fileLabel.style.display = show ? "block" : "none";
-      if (clearBtn) clearBtn.style.display = show ? "inline-block" : "none";
+      fileEl.style.display = showImage ? "block" : "none";
+      if (fileLabel) fileLabel.style.display = showImage ? "block" : "none";
+      if (clearBtn) clearBtn.style.display = showImage ? "inline-block" : "none";
     }
+    if (overlayLabel) overlayLabel.style.display = showImage ? "block" : "none";
+    if (overlayRow) overlayRow.style.display = showImage ? "flex" : "none";
   };
+  if (overlayInput) {
+    overlayInput.addEventListener("input", () => {
+      if (overlayValueDisplay) overlayValueDisplay.textContent = `${overlayInput.value}%`;
+      const overlay = document.getElementById("bg-overlay");
+      if (overlay) overlay.style.opacity = String(Number(overlayInput.value) / 100);
+    });
+  }
   if (modeEl) modeEl.addEventListener("change", refreshVisibility);
   if (clearBtn)
     clearBtn.addEventListener("click", async () => {
