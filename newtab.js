@@ -164,6 +164,11 @@ const I18N = {
   },
 };
 
+// --- Constants ---
+const MAX_PINNED_TABS = 4;
+const HISTORY_MAX_RESULTS = 8;
+const HISTORY_DAYS_BACK = 7;
+
 // --- Feature Flags System ---
 const FEATURE_FLAGS = {
   weather: { default: true, labelKey: "flagWeather", descKey: "flagWeatherDesc" },
@@ -270,7 +275,7 @@ async function addPinnedTab(url, label) {
   if (!url || !label) return;
   try { new URL(url); } catch (_) { return; }
   const tabs = await getPinnedTabs();
-  if (tabs.length >= 12) return;
+  if (tabs.length >= MAX_PINNED_TABS) return;
   tabs.push({ url: url.trim(), label: label.trim() });
   await savePinnedTabs(tabs);
   renderPinnedTabs();
@@ -297,6 +302,10 @@ async function renderPinnedTabs() {
   const tabs = await getPinnedTabs();
   container.innerHTML = "";
   if (tabs.length === 0) return;
+  const heading = document.createElement("p");
+  heading.className = "section-heading";
+  heading.textContent = tr("pinnedTabs");
+  container.appendChild(heading);
   for (const tab of tabs) {
     const a = document.createElement("a");
     a.href = tab.url;
@@ -394,8 +403,8 @@ async function renderRecentHistory() {
   try {
     const results = await browser.history.search({
       text: "",
-      maxResults: 10,
-      startTime: Date.now() - 7 * 24 * 60 * 60 * 1000,
+      maxResults: HISTORY_MAX_RESULTS,
+      startTime: Date.now() - HISTORY_DAYS_BACK * 24 * 60 * 60 * 1000,
     });
     const filtered = (results || []).filter(
       (item) => item.url && item.url.startsWith("http")
@@ -407,6 +416,10 @@ async function renderRecentHistory() {
       container.appendChild(empty);
       return;
     }
+    const heading = document.createElement("p");
+    heading.className = "section-heading";
+    heading.textContent = tr("recentHistory");
+    container.appendChild(heading);
     for (const item of filtered) {
       const a = document.createElement("a");
       a.href = item.url;
@@ -1466,9 +1479,8 @@ function toggleExpand() {
   if (weatherSection && !isFeatureEnabled("weather"))
     weatherSection.style.display = "none";
 
-  // Pinned tabs: initial render and button wiring
+  // Pinned tabs: settings list (applyFeatureFlags handles the main render)
   if (isFeatureEnabled("pinned_tabs")) {
-    renderPinnedTabs();
     renderPinnedTabsSettings();
   }
   const pinnedTabsSection = document.getElementById("pinned-tabs-settings-section");
@@ -1488,11 +1500,6 @@ function toggleExpand() {
         if (labelEl) labelEl.value = "";
       }
     });
-  }
-
-  // Recent history: initial render
-  if (isFeatureEnabled("recent_history")) {
-    renderRecentHistory();
   }
 
   // Dev panel keyboard shortcut: Ctrl+Shift+D

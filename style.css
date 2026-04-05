@@ -645,6 +645,23 @@ main.expanded .collapsible-hero {
   pointer-events: none;
 }
 
+/* Pinned tabs and history hidden until expanded */
+.pinned-tabs-row,
+.recent-history-row {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 400ms ease, max-height 400ms ease;
+}
+
+main.expanded .pinned-tabs-row,
+main.expanded .recent-history-row {
+  opacity: 1;
+  max-height: 800px;
+  pointer-events: auto;
+}
+
 /* Mini profile in header (visible only when expanded) */
 .header-profile {
   font-size: 1.6em;
@@ -660,10 +677,21 @@ main.expanded .collapsible-hero {
   max-height: 3em;
 }
 
+/* Section headings inside grids */
+.section-heading {
+  grid-column: 1 / -1;
+  font-size: 1.2em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.5;
+  text-align: center;
+  margin: 0;
+}
+
 /* --- Pinned Tabs --- */
 .pinned-tabs-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  grid-template-columns: repeat(4, minmax(70px, 1fr));
   gap: 1rem;
   padding: 1rem 0;
   max-width: 800px;
@@ -764,7 +792,7 @@ main.expanded .collapsible-hero {
 /* --- Recent History --- */
 .recent-history-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 1.5rem;
   padding: 0.5rem 0;
   max-width: 800px;
