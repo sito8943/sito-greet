@@ -1290,6 +1290,26 @@ async function applyFeatureFlags() {
   }
 }
 
+// --- Expand/Collapse ---
+let _expanded = false;
+
+function toggleExpand() {
+  _expanded = !_expanded;
+  const main = document.querySelector("main");
+  if (main) main.classList.toggle("expanded", _expanded);
+
+  const headerProfile = document.getElementById("header-profile");
+  if (headerProfile) {
+    if (_expanded) {
+      const profileEl = document.getElementById("profile");
+      headerProfile.textContent = profileEl ? profileEl.textContent : "";
+      headerProfile.classList.add("show");
+    } else {
+      headerProfile.classList.remove("show");
+    }
+  }
+}
+
 (async () => {
   // Load feature flags before anything else
   await loadFeatureFlags();
@@ -1323,6 +1343,8 @@ async function applyFeatureFlags() {
 
   const settingsBtn = document.getElementById("settings-button");
   if (settingsBtn) settingsBtn.addEventListener("click", openDialog);
+  const expandBtn = document.getElementById("expand-btn");
+  if (expandBtn) expandBtn.addEventListener("click", toggleExpand);
   const cancelBtn = document.getElementById("cancel");
   if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
   const form = document.getElementById("form-settings");
