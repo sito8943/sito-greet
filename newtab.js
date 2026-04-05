@@ -77,7 +77,7 @@ const I18N = {
     pinnedTabRemove: "Remove",
     // Recent History
     flagRecentHistory: "Recent History",
-    flagRecentHistoryDesc: "Show last 10 visited sites",
+    flagRecentHistoryDesc: `Show last ${HISTORY_MAX_RESULTS} visited sites`,
     recentHistory: "Recent",
     recentHistoryEmpty: "No recent history.",
     recentHistoryPermission: "Grant history permission to see recent sites.",
@@ -156,7 +156,7 @@ const I18N = {
     pinnedTabRemove: "Eliminar",
     // Recent History
     flagRecentHistory: "Historial Reciente",
-    flagRecentHistoryDesc: "Mostrar últimos 10 sitios visitados",
+    flagRecentHistoryDesc: `Mostrar últimos ${HISTORY_MAX_RESULTS} sitios visitados`,
     recentHistory: "Reciente",
     recentHistoryEmpty: "Sin historial reciente.",
     recentHistoryPermission: "Otorga permiso de historial para ver sitios recientes.",

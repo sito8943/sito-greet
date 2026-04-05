@@ -622,7 +622,7 @@ input:checked + .slider:before {
   width: 32px;
   height: 32px;
   margin-top: 0.5rem;
-  transition: transform 400ms ease;
+  transition: transform 500ms ease-in-out;
 }
 
 .expand-btn svg {
@@ -637,9 +637,9 @@ main.expanded .expand-btn {
 /* Hero elements (greeting + profile) collapse on expand */
 .collapsible-hero {
   transition:
-    transform 400ms ease,
-    opacity 400ms ease,
-    max-height 400ms ease;
+    transform 500ms ease-in-out,
+    opacity 500ms ease-in-out,
+    max-height 500ms ease-in-out;
   transform-origin: top center;
   max-height: 200px;
   overflow: hidden;
@@ -660,8 +660,8 @@ main.expanded .collapsible-hero {
   overflow: hidden;
   pointer-events: none;
   transition:
-    opacity 400ms ease,
-    max-height 400ms ease;
+    opacity 500ms ease-in-out,
+    max-height 500ms ease-in-out;
 }
 
 main.expanded .pinned-tabs-row,
@@ -679,8 +679,8 @@ main.expanded .recent-history-row {
   max-height: 0;
   overflow: hidden;
   transition:
-    opacity 400ms ease,
-    max-height 400ms ease;
+    opacity 500ms ease-in-out,
+    max-height 500ms ease-in-out;
 }
 
 .header-profile.show {
