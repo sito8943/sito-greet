@@ -1557,6 +1557,15 @@ function goUp() {
   }
   const cancelBtn = document.getElementById("cancel");
   if (cancelBtn) cancelBtn.addEventListener("click", closeDialog);
+  const settingsDialog = document.getElementById("dialog-settings");
+  if (settingsDialog) {
+    settingsDialog.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !e.defaultPrevented) {
+        e.preventDefault();
+        closeDialog();
+      }
+    });
+  }
   const form = document.getElementById("form-settings");
   if (form) form.addEventListener("submit", updateSettings);
   // Background controls visibility + clear image

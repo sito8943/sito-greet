@@ -8,6 +8,13 @@ _No notable changes yet._
 
 ---
 
+## 1.0.10 — 2026-09-26
+
+### Fixed
+- Escape explicitly closes the Settings dialog, including when a form field is focused.
+
+---
+
 ## 1.0.9 — Feature flags, productivity widgets, and directional layout
 
 ### Added
