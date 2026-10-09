@@ -8,6 +8,15 @@ _No notable changes yet._
 
 ---
 
+## 1.0.11 — 2026-10-09
+
+First listed (public AMO) release since 1.0.4. Includes everything from 1.0.5–1.0.10, which were self-distributed only.
+
+### Fixed
+- Manifest icon key now matches the actual icon size (128px).
+
+---
+
 ## 1.0.10 — 2026-09-26
 
 ### Fixed

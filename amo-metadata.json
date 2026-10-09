@@ -3,9 +3,14 @@
     "en-US": "Shows a greeting with the given user's name and profile name on new tabs.",
     "es-ES": "Muestra un saludo con el nombre de usuario y del perfil en las nuevas tabs"
   },
-  "categories": ["other"],
+  "categories": [
+    "other"
+  ],
   "version": {
     "license": "MPL-2.0",
-    "release_notes": { "en-US": "Initial release", "es-ES": "Versión inicial" }
+    "release_notes": {
+      "en-US": "New: weather widget (Open-Meteo), background customization (gradient, solid color or image with overlay opacity), pinned tabs, recent history (optional permission), monthly calendar and expandable layout with keyboard shortcuts. Responsive settings dialog showing the current version. Fixes: coordinate validation, more reliable saving, Escape closes the Settings dialog.",
+      "es-ES": "Nuevo: widget del clima (Open-Meteo), personalización del fondo (degradado, color sólido o imagen con opacidad), pestañas fijadas, historial reciente (permiso opcional), calendario mensual y vista expandible con atajos de teclado. Diálogo de ajustes adaptable que muestra la versión actual. Correcciones: validación de coordenadas, guardado más fiable y Escape cierra el diálogo de ajustes."
+    }
   }
 }
